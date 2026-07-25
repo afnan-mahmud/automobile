@@ -18,7 +18,7 @@ Related docs:
 | Backend logic | Server Actions (internal mutations/queries) + Route Handlers (`/api/*`) for public/external endpoints |
 | Database | MongoDB Atlas, Mongoose ODM |
 | Auth | Auth.js (NextAuth), Credentials provider (email/phone + password), JWT session with `role` claim |
-| Styling/UI | Tailwind CSS + shadcn/ui |
+| Styling/UI | Tailwind CSS + shadcn/ui. Note: this project's shadcn/ui was initialized with the newer `base-nova` style, built on Base UI (`@base-ui/react`) instead of Radix. Base UI components use a `render={<Element />}` prop instead of Radix's `asChild` for composing a trigger/child (e.g. `<DialogTrigger render={<Button>Open</Button>} />`). Plain `Button`/`Badge` don't support `asChild` at all — for a link styled as a button, use the exported `buttonVariants()` className on the `<Link>` directly instead of wrapping it in `<Button asChild>`. |
 | PDF generation | `@react-pdf/renderer` — generated on-the-fly (invoice, warranty card, discount card), not stored |
 | File uploads | Local VPS filesystem (`/uploads`), served via Next.js static/route handler |
 | SMS | Abstraction layer `lib/sms.ts` wrapping a BD SMS gateway provider (provider chosen at implementation time) |

@@ -16,7 +16,7 @@ export default async function DashboardLayout({
         <div className="border-b px-4 py-4">
           <span className="font-semibold">Dhaka Automobiles</span>
         </div>
-        <DashboardNav />
+        <DashboardNav role={session!.user.role} />
       </aside>
       <div className="flex-1">
         <header className="flex items-center justify-between border-b px-6 py-4">

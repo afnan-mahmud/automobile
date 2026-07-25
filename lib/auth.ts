@@ -1,6 +1,7 @@
 import NextAuth from "next-auth";
 import Credentials from "next-auth/providers/credentials";
 import bcrypt from "bcryptjs";
+import { redirect } from "next/navigation";
 import { connectToDatabase } from "@/lib/db";
 import { User, type Role } from "@/models/User";
 
@@ -57,6 +58,19 @@ export async function requireRole(allowedRoles: Role[]) {
   const session = await auth();
   if (!session?.user || !allowedRoles.includes(session.user.role)) {
     throw new Error("Unauthorized");
+  }
+  return session;
+}
+
+/**
+ * Page-level guard for Server Components: redirects instead of throwing,
+ * so an unauthorized role gets sent back to the dashboard rather than
+ * seeing a raw error page.
+ */
+export async function requirePageRole(allowedRoles: Role[]) {
+  const session = await auth();
+  if (!session?.user || !allowedRoles.includes(session.user.role)) {
+    redirect("/dashboard");
   }
   return session;
 }
