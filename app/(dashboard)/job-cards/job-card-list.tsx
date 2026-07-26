@@ -1,11 +1,12 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useMemo, useState, useCallback } from "react";
 import Link from "next/link";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { Button, buttonVariants } from "@/components/ui/button";
 import { type JobCardStatus } from "@/types/jobCard";
+import { OrderDetailPanel } from "./order-detail-panel";
 import {
   Search,
   Plus,
@@ -91,6 +92,9 @@ export function JobCardList({
   const [tab, setTab] = useState<"all" | JobCardStatus>("all");
   const [query, setQuery] = useState("");
   const [page, setPage] = useState(1);
+  const [selectedId, setSelectedId] = useState<string | null>(null);
+
+  const closePanel = useCallback(() => setSelectedId(null), []);
 
   const counts: Record<"all" | JobCardStatus, number> = useMemo(() => ({
     all: initialJobCards.length,
@@ -271,13 +275,22 @@ export function JobCardList({
 
         {/* Rows */}
         {paginated.map((jc, i) => (
-          <Link
+          <div
             key={jc._id}
-            href={`/job-cards/${jc._id}`}
             className={cn(
-              "grid grid-cols-[2fr_2fr_2fr_1fr_1fr_auto] items-center gap-4 px-5 py-4 transition-colors hover:bg-muted/40",
-              i > 0 && "border-t"
+              "grid grid-cols-[2fr_2fr_2fr_1fr_1fr_auto] items-center gap-4 px-5 py-4 transition-colors cursor-pointer",
+              "hover:bg-muted/40",
+              i > 0 && "border-t",
+              selectedId === jc._id && "bg-primary/5 border-l-2 border-l-primary"
             )}
+            onClick={() => {
+              // On small screens (<md) navigate; on md+ open panel
+              if (window.innerWidth < 768) {
+                window.location.href = `/job-cards/${jc._id}`;
+              } else {
+                setSelectedId(jc._id === selectedId ? null : jc._id);
+              }
+            }}
           >
             {/* Order # */}
             <div>
@@ -352,7 +365,7 @@ export function JobCardList({
                 <MoreHorizontal className="size-4 text-muted-foreground" />
               </button>
             </div>
-          </Link>
+          </div>
         ))}
       </div>
 
@@ -398,6 +411,9 @@ export function JobCardList({
           </div>
         </div>
       )}
+
+      {/* ── Detail panel (desktop only) ── */}
+      <OrderDetailPanel jobCardId={selectedId} onClose={closePanel} />
     </div>
   );
 }
