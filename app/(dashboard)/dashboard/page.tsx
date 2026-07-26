@@ -58,8 +58,8 @@ export default async function DashboardPage() {
     return (
       <div className="space-y-8">
         <div className="grid grid-cols-1 gap-6 sm:grid-cols-3">
-          <StatCard title="Open Job Cards" value={String(openCount)} variant="primary" progress={75} />
-          <StatCard title="In-Progress Job Cards" value={String(inProgressCount)} variant="primary" progress={45} />
+          <StatCard title="Open Orders" value={String(openCount)} variant="primary" progress={75} />
+          <StatCard title="In-Progress Orders" value={String(inProgressCount)} variant="primary" progress={45} />
           <StatCard title="Low Stock Items" value={String(lowStockCount)} />
         </div>
         <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
@@ -111,7 +111,7 @@ export default async function DashboardPage() {
           variant="primary"
           progress={thisMonthSummary.outstandingDues > 0 ? 80 : 0}
         />
-        <StatCard title="Open Job Cards" value={String(openCount)} />
+        <StatCard title="Open Orders" value={String(openCount)} />
         <StatCard title="Low Stock Items" value={String(lowStockCount)} />
       </div>
       <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">

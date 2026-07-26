@@ -14,7 +14,7 @@ import { getProductById, getStockTransactions } from "@/actions/stock";
 
 const TYPE_LABEL: Record<string, string> = {
   retail_sale: "Retail Sale",
-  job_card_usage: "Job Card Usage",
+  job_card_usage: "Order Card Usage",
   purchase_in: "Purchase In",
   adjustment: "Adjustment",
 };

@@ -22,7 +22,7 @@ export function JobCardStatusChart({ data }: { data: StatusRow[] }) {
   return (
     <Card>
       <CardHeader>
-        <CardTitle>Job Card Status Breakdown</CardTitle>
+        <CardTitle>Order Status Breakdown</CardTitle>
       </CardHeader>
       <CardContent>
         <div className="h-56 w-full">

@@ -23,11 +23,11 @@ export function RecentJobCardsPanel({ jobCards }: { jobCards: JobCardRow[] }) {
   return (
     <Card>
       <CardHeader>
-        <CardTitle>Recent Job Cards</CardTitle>
+        <CardTitle>Recent Orders</CardTitle>
       </CardHeader>
       <CardContent className="space-y-3">
         {jobCards.length === 0 && (
-          <p className="text-sm text-muted-foreground">No job cards yet.</p>
+          <p className="text-sm text-muted-foreground">No orders yet.</p>
         )}
         {jobCards.map((jc) => (
           <Link

@@ -29,20 +29,7 @@ export default async function JobCardDetailPage({
 
   return (
     <div className="space-y-6">
-      <Card>
-        <CardHeader>
-          <CardTitle>Job Card {jobCard.jobCardNumber}</CardTitle>
-        </CardHeader>
-        <CardContent className="space-y-1 text-sm text-muted-foreground">
-          <p>
-            Vehicle: {jobCard.vehicleId?.registrationNumber}{" "}
-            {jobCard.vehicleId?.make ? `— ${jobCard.vehicleId.make} ${jobCard.vehicleId.model ?? ""}` : ""}
-          </p>
-          <p>
-            Customer: {jobCard.customerId?.name} ({jobCard.customerId?.phone})
-          </p>
-        </CardContent>
-      </Card>
+
 
       <JobCardDetail
         jobCard={jobCard}

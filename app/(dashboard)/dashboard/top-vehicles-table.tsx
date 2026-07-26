@@ -29,7 +29,7 @@ export function TopVehiclesTable({ vehicles }: { vehicles: VehicleRow[] }) {
             <TableRow>
               <TableHead>Vehicle</TableHead>
               <TableHead>Owner</TableHead>
-              <TableHead>Job Cards</TableHead>
+              <TableHead>Orders</TableHead>
               <TableHead>Last Service</TableHead>
               <TableHead>Lifetime Spend</TableHead>
             </TableRow>

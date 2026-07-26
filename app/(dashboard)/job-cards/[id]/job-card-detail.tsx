@@ -7,14 +7,6 @@ import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table";
-import {
   Select,
   SelectContent,
   SelectItem,
@@ -26,12 +18,26 @@ import {
   type JobCardStatus,
   type TaskStatus,
 } from "@/types/jobCard";
-import { jobCardStatusVariant, taskStatusVariant } from "@/lib/statusBadge";
 import { updateJobCardStatus, updateTaskStatus, addPartsUsed } from "@/actions/jobCards";
 import { generateInvoiceFromJobCard } from "@/actions/invoices";
 import { createTrackingLink } from "@/actions/tracking";
 import { AssignTaskDialog } from "./assign-task-dialog";
 import { IssueWarrantyDialog } from "./issue-warranty-dialog";
+import { cn } from "@/lib/utils";
+import {
+  CheckCircle2,
+  Clock,
+  ClipboardList,
+  Wrench,
+  Camera,
+  Package,
+  Plus,
+  Play,
+  FileText,
+  Link as LinkIcon,
+  ShieldCheck,
+  Car
+} from "lucide-react";
 
 type Task = {
   _id: string;
@@ -52,24 +58,43 @@ type PartUsed = {
 
 type JobCard = {
   _id: string;
+  jobCardNumber: string;
   status: JobCardStatus;
   tasks: Task[];
   photos: Photo[];
   partsUsed: PartUsed[];
+  customerId?: { name: string; phone: string; email?: string } | null;
+  vehicleId?: { make?: string; model?: string; registrationNumber: string; year?: number } | null;
 };
 
-const STATUS_LABEL: Record<JobCardStatus, string> = {
-  open: "Open",
-  in_progress: "In Progress",
-  completed: "Completed",
-  delivered: "Delivered",
+const STATUS_STYLE: Record<JobCardStatus, { label: string; class: string; icon: React.ReactNode }> = {
+  open: {
+    label: "Open",
+    class: "bg-blue-50 text-blue-600 border-blue-200 dark:bg-blue-950/40 dark:text-blue-400",
+    icon: <ClipboardList className="size-5" />,
+  },
+  in_progress: {
+    label: "In Progress",
+    class: "bg-amber-50 text-amber-600 border-amber-200 dark:bg-amber-950/40 dark:text-amber-400",
+    icon: <Wrench className="size-5" />,
+  },
+  completed: {
+    label: "Completed",
+    class: "bg-violet-50 text-violet-600 border-violet-200 dark:bg-violet-950/40 dark:text-violet-400",
+    icon: <CheckCircle2 className="size-5" />,
+  },
+  delivered: {
+    label: "Delivered",
+    class: "bg-emerald-50 text-emerald-600 border-emerald-200 dark:bg-emerald-950/40 dark:text-emerald-400",
+    icon: <CheckCircle2 className="size-5" />,
+  },
 };
 
-const TASK_STATUS_LABEL: Record<TaskStatus, string> = {
-  pending: "Pending",
-  in_progress: "In Progress",
-  completed: "Completed",
-  carried_forward: "Carried Forward",
+const TASK_STYLE: Record<TaskStatus, { label: string; class: string }> = {
+  pending: { label: "Pending", class: "bg-muted text-muted-foreground" },
+  in_progress: { label: "In Progress", class: "bg-amber-100 text-amber-700 dark:bg-amber-950/60 dark:text-amber-400" },
+  completed: { label: "Done", class: "bg-emerald-100 text-emerald-700 dark:bg-emerald-950/60 dark:text-emerald-400" },
+  carried_forward: { label: "Carried Over", class: "bg-rose-100 text-rose-700 dark:bg-rose-950/60 dark:text-rose-400" },
 };
 
 export function JobCardDetail({
@@ -203,254 +228,376 @@ export function JobCardDetail({
     router.refresh();
   }
 
-  return (
-    <div className="space-y-6">
-      <Card>
-        <CardHeader className="flex flex-row items-center justify-between">
-          <CardTitle>Status</CardTitle>
-          {isStaffManager && (
-            <div className="flex flex-col items-end gap-1">
-              <div className="flex gap-2">
-                <Button
-                  size="sm"
-                  variant="outline"
-                  onClick={handleCopyTrackingLink}
-                  disabled={isCreatingLink}
-                >
-                  {isCreatingLink ? "Copying..." : trackingCopied ? "Copied!" : "Copy Tracking Link"}
-                </Button>
-                <Button size="sm" variant="outline" onClick={handleGenerateInvoice} disabled={isGeneratingInvoice}>
-                  {isGeneratingInvoice ? "Generating..." : "Generate Invoice"}
-                </Button>
-                {warrantyCard ? (
-                  <a
-                    href={`/api/warranty/${warrantyCard._id}/pdf`}
-                    target="_blank"
-                    rel="noreferrer"
-                    className="inline-flex h-8 items-center rounded-md border px-3 text-sm font-medium hover:bg-accent"
-                  >
-                    Warranty PDF
-                  </a>
-                ) : (
-                  <IssueWarrantyDialog
-                    jobCardId={jobCard._id}
-                    disabled={!["completed", "delivered"].includes(jobCard.status)}
-                  />
-                )}
-              </div>
-              {invoiceError && <p className="text-sm text-destructive">{invoiceError}</p>}
-              {trackingError && <p className="text-sm text-destructive">{trackingError}</p>}
-            </div>
-          )}
-        </CardHeader>
-        <CardContent className="space-y-2">
-          {isStaffManager ? (
-            <Select
-            value={jobCard.status}
-            onValueChange={(v) => v && handleStatusChange(v)}
-          >
-              <SelectTrigger className="w-48">
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                {JOB_CARD_STATUSES.map((status) => (
-                  <SelectItem key={status} value={status}>
-                    {STATUS_LABEL[status]}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          ) : (
-            <Badge variant={jobCardStatusVariant(jobCard.status)}>
-              {STATUS_LABEL[jobCard.status]}
-            </Badge>
-          )}
-          {statusError && <p className="text-sm text-destructive">{statusError}</p>}
-        </CardContent>
-      </Card>
+  const s = STATUS_STYLE[jobCard.status];
+  const taskDone = jobCard.tasks.filter((t) => t.status === "completed").length;
+  const taskTotal = jobCard.tasks.length;
+  const progress = taskTotal > 0 ? Math.round((taskDone / taskTotal) * 100) : 0;
 
-      <Card>
-        <CardHeader className="flex flex-row items-center justify-between">
-          <CardTitle>Tasks</CardTitle>
-          {isStaffManager && (
-            <AssignTaskDialog jobCardId={jobCard._id} employees={employees} />
-          )}
-        </CardHeader>
-        <CardContent>
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead>Description</TableHead>
-                <TableHead>Assigned To</TableHead>
-                <TableHead>Date</TableHead>
-                <TableHead>Status</TableHead>
-                <TableHead />
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {jobCard.tasks.length === 0 && (
-                <TableRow>
-                  <TableCell colSpan={5} className="text-center text-muted-foreground">
-                    No tasks yet.
-                  </TableCell>
-                </TableRow>
+  return (
+    <div className="grid grid-cols-1 items-start gap-6 lg:grid-cols-[1fr_360px]">
+      
+      {/* ── MAIN COLUMN ── */}
+      <div className="space-y-6">
+
+        {/* HERO BOX */}
+        <div className="relative overflow-hidden rounded-3xl bg-gradient-to-br from-primary/10 via-primary/5 to-background p-8 border">
+          <div className="relative z-10 flex flex-col md:flex-row md:items-center justify-between gap-6">
+            <div>
+              <p className="text-sm font-semibold uppercase tracking-wider text-primary mb-1">
+                Order #{jobCard.jobCardNumber}
+              </p>
+              <h1 className="text-3xl font-bold tracking-tight text-foreground">
+                {jobCard.customerId?.name ?? "Guest Customer"}
+              </h1>
+              {jobCard.customerId?.phone && (
+                <p className="mt-1 text-muted-foreground">{jobCard.customerId.phone}</p>
               )}
-              {jobCard.tasks.map((task) => (
-                <TableRow key={task._id}>
-                  <TableCell>{task.description}</TableCell>
-                  <TableCell>{task.assignedTo?.name ?? "—"}</TableCell>
-                  <TableCell>
-                    {new Date(task.assignedDate).toLocaleDateString()}
-                    {task.carriedForwardFromDate && (
-                      <Badge variant="warning" className="ml-2">
-                        Carried forward from{" "}
-                        {new Date(task.carriedForwardFromDate).toLocaleDateString()}
-                      </Badge>
-                    )}
-                  </TableCell>
-                  <TableCell>
-                    <Badge variant={taskStatusVariant(task.status)}>
-                      {TASK_STATUS_LABEL[task.status]}
-                    </Badge>
-                  </TableCell>
-                  <TableCell>
-                    {canCompleteTask(task) && task.status !== "completed" && (
-                      <div className="flex gap-2">
-                        {task.status === "pending" && (
-                          <Button
-                            size="sm"
-                            variant="outline"
-                            onClick={() => handleTaskStatusChange(task._id, "in_progress")}
-                          >
-                            Start
-                          </Button>
-                        )}
+            </div>
+            
+            {jobCard.vehicleId && (
+              <div className="flex items-center gap-4 rounded-2xl bg-background/60 backdrop-blur-md border px-5 py-3 shadow-sm">
+                <div className="flex size-12 shrink-0 items-center justify-center rounded-full bg-primary/10 text-primary">
+                  <Car className="size-6" />
+                </div>
+                <div>
+                  <p className="font-semibold text-foreground">
+                    {jobCard.vehicleId.registrationNumber}
+                  </p>
+                  <p className="text-sm text-muted-foreground">
+                    {jobCard.vehicleId.make} {jobCard.vehicleId.model} {jobCard.vehicleId.year}
+                  </p>
+                </div>
+              </div>
+            )}
+          </div>
+        </div>
+        
+        {/* STATS ROW */}
+        <div className="grid grid-cols-2 gap-4 sm:grid-cols-4">
+          <div className={cn("flex flex-col items-center justify-center rounded-2xl border p-4 text-center transition-colors", s.class)}>
+            <div className="mb-2 rounded-full bg-background/50 p-2 shadow-sm backdrop-blur-sm">
+              {s.icon}
+            </div>
+            <p className="text-xs font-medium uppercase tracking-wider opacity-80">Status</p>
+            <p className="mt-1 text-lg font-bold leading-none">{s.label}</p>
+          </div>
+          
+          <div className="flex flex-col items-center justify-center rounded-2xl border bg-cyan-50/50 p-4 text-center text-cyan-600 dark:bg-cyan-950/20 dark:text-cyan-400">
+            <div className="mb-2 rounded-full bg-background/50 p-2 shadow-sm backdrop-blur-sm text-cyan-600 dark:text-cyan-400">
+              <ClipboardList className="size-5" />
+            </div>
+            <p className="text-xs font-medium uppercase tracking-wider opacity-80">Tasks</p>
+            <p className="mt-1 text-lg font-bold leading-none">{taskDone} / {taskTotal}</p>
+          </div>
+
+          <div className="flex flex-col items-center justify-center rounded-2xl border bg-pink-50/50 p-4 text-center text-pink-600 dark:bg-pink-950/20 dark:text-pink-400">
+            <div className="mb-2 rounded-full bg-background/50 p-2 shadow-sm backdrop-blur-sm text-pink-600 dark:text-pink-400">
+              <Package className="size-5" />
+            </div>
+            <p className="text-xs font-medium uppercase tracking-wider opacity-80">Parts Used</p>
+            <p className="mt-1 text-lg font-bold leading-none">{jobCard.partsUsed.length}</p>
+          </div>
+
+          <div className="flex flex-col items-center justify-center rounded-2xl border bg-purple-50/50 p-4 text-center text-purple-600 dark:bg-purple-950/20 dark:text-purple-400">
+            <div className="mb-2 rounded-full bg-background/50 p-2 shadow-sm backdrop-blur-sm text-purple-600 dark:text-purple-400">
+              <Camera className="size-5" />
+            </div>
+            <p className="text-xs font-medium uppercase tracking-wider opacity-80">Photos</p>
+            <p className="mt-1 text-lg font-bold leading-none">{jobCard.photos.length}</p>
+          </div>
+        </div>
+
+        {/* TASKS LIST */}
+        <div className="rounded-2xl border bg-card p-6 shadow-sm">
+          <div className="mb-4 flex items-center justify-between">
+            <h3 className="text-lg font-semibold tracking-tight">Tasks Activity</h3>
+            {isStaffManager && (
+              <AssignTaskDialog jobCardId={jobCard._id} employees={employees} />
+            )}
+          </div>
+          
+          <div className="space-y-3">
+            {jobCard.tasks.length === 0 && (
+              <div className="rounded-xl border border-dashed p-8 text-center">
+                <ClipboardList className="mx-auto mb-2 size-8 text-muted-foreground/50" />
+                <p className="text-sm font-medium">No tasks assigned</p>
+                <p className="text-xs text-muted-foreground">Add tasks to get started</p>
+              </div>
+            )}
+            
+            {jobCard.tasks.map((task) => (
+              <div key={task._id} className="group relative flex items-center justify-between gap-4 rounded-xl border bg-muted/20 p-4 transition-all hover:bg-muted/40">
+                <div className="flex items-center gap-4 min-w-0 flex-1">
+                  <div className={cn(
+                    "flex size-10 shrink-0 items-center justify-center rounded-full text-white shadow-sm",
+                    task.status === 'completed' ? "bg-emerald-500" : task.status === 'in_progress' ? "bg-amber-500" : "bg-slate-400"
+                  )}>
+                    {task.status === 'completed' ? <CheckCircle2 className="size-5" /> : task.status === 'in_progress' ? <Wrench className="size-5" /> : <Clock className="size-5" />}
+                  </div>
+                  <div className="min-w-0 flex-1">
+                    <p className="truncate font-semibold text-card-foreground">{task.description}</p>
+                    <div className="mt-1 flex flex-wrap items-center gap-2 text-xs text-muted-foreground">
+                      <span className="font-medium text-foreground/80">{task.assignedTo?.name ?? "Unassigned"}</span>
+                      <span>•</span>
+                      <span>{new Date(task.assignedDate).toLocaleDateString()}</span>
+                      {task.carriedForwardFromDate && (
+                        <>
+                          <span>•</span>
+                          <span className="text-rose-500 font-medium">Carried Over</span>
+                        </>
+                      )}
+                    </div>
+                  </div>
+                </div>
+                
+                <div className="flex items-center gap-2 shrink-0">
+                  <Badge variant="secondary" className={cn("hidden sm:inline-flex", TASK_STYLE[task.status].class)}>
+                    {TASK_STYLE[task.status].label}
+                  </Badge>
+                  
+                  {canCompleteTask(task) && task.status !== "completed" && (
+                    <div className="flex items-center gap-2 ml-2 border-l pl-4 border-border/50">
+                      {task.status === "pending" && (
                         <Button
                           size="sm"
-                          onClick={() => handleTaskStatusChange(task._id, "completed")}
+                          variant="outline"
+                          className="h-8 rounded-full px-4 text-xs font-bold uppercase tracking-wider bg-transparent hover:bg-amber-50 hover:text-amber-600 hover:border-amber-200"
+                          onClick={() => handleTaskStatusChange(task._id, "in_progress")}
                         >
-                          Mark Complete
+                          <Play className="mr-1.5 size-3.5" /> Start
                         </Button>
-                      </div>
-                    )}
-                  </TableCell>
-                </TableRow>
-              ))}
-            </TableBody>
-          </Table>
-        </CardContent>
-      </Card>
+                      )}
+                      <Button
+                        size="sm"
+                        className="h-8 rounded-full px-4 text-xs font-bold uppercase tracking-wider bg-emerald-600 hover:bg-emerald-700 text-white"
+                        onClick={() => handleTaskStatusChange(task._id, "completed")}
+                      >
+                        <CheckCircle2 className="mr-1.5 size-3.5" /> Done
+                      </Button>
+                    </div>
+                  )}
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
 
-      <Card>
-        <CardHeader>
-          <CardTitle>Photos</CardTitle>
-        </CardHeader>
-        <CardContent className="space-y-4">
-          {jobCard.photos.length > 0 && (
-            <div className="grid grid-cols-2 gap-4 sm:grid-cols-4">
+        {/* PHOTOS */}
+        <div className="rounded-2xl border bg-card p-6 shadow-sm">
+          <div className="mb-4 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+            <h3 className="text-lg font-semibold tracking-tight">Photos</h3>
+            {isStaffManager && (
+              <div className="flex flex-wrap items-center gap-2">
+                <Select value={photoType} onValueChange={(v) => setPhotoType(v as "before" | "after")}>
+                  <SelectTrigger className="h-9 w-[110px] rounded-lg">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="before">Before</SelectItem>
+                    <SelectItem value="after">After</SelectItem>
+                  </SelectContent>
+                </Select>
+                <div className="relative">
+                  <Input 
+                    ref={fileInputRef} 
+                    type="file" 
+                    accept="image/*" 
+                    className="h-9 max-w-[200px] cursor-pointer rounded-lg text-xs file:hidden pt-2" 
+                  />
+                  <Camera className="absolute right-2 top-2.5 size-4 text-muted-foreground pointer-events-none" />
+                </div>
+                <Button onClick={handlePhotoUpload} disabled={isUploadingPhoto} size="sm" className="h-9 rounded-lg px-4">
+                  {isUploadingPhoto ? "..." : "Upload"}
+                </Button>
+              </div>
+            )}
+          </div>
+          {photoError && <p className="mb-4 text-sm text-destructive">{photoError}</p>}
+          
+          {jobCard.photos.length === 0 ? (
+            <div className="rounded-xl border border-dashed p-8 text-center">
+              <Camera className="mx-auto mb-2 size-8 text-muted-foreground/50" />
+              <p className="text-sm font-medium">No photos attached</p>
+            </div>
+          ) : (
+            <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 md:grid-cols-4">
               {jobCard.photos.map((photo) => (
-                <div key={photo._id} className="space-y-1">
+                <div key={photo._id} className="group relative aspect-square overflow-hidden rounded-xl border bg-muted">
                   {/* eslint-disable-next-line @next/next/no-img-element */}
                   <img
                     src={photo.url}
                     alt={photo.caption ?? photo.type}
-                    className="aspect-square w-full rounded-md object-cover"
+                    className="h-full w-full object-cover transition-transform duration-300 group-hover:scale-105"
                   />
-                  <Badge variant="secondary" className="capitalize">
-                    {photo.type}
-                  </Badge>
+                  <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/60 to-transparent p-3 pt-8">
+                    <Badge variant="secondary" className="bg-white/20 text-white backdrop-blur-md border-white/10 shadow-none hover:bg-white/30 capitalize">
+                      {photo.type}
+                    </Badge>
+                  </div>
                 </div>
               ))}
             </div>
           )}
+        </div>
+      </div>
+
+      {/* ── RIGHT COLUMN (SIDEBAR) ── */}
+      <div className="space-y-6">
+        
+        {/* QUICK ACTIONS */}
+        <div className="rounded-2xl border bg-card shadow-sm overflow-hidden">
+          <div className="bg-muted/40 p-5 border-b">
+            <h3 className="font-semibold flex items-center gap-2">
+              <FileText className="size-4 text-primary" /> 
+              Order Actions
+            </h3>
+          </div>
+          <div className="p-5 space-y-4">
+            {isStaffManager ? (
+              <div className="space-y-3">
+                <div className="space-y-1.5">
+                  <label className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Order Status</label>
+                  <Select
+                    value={jobCard.status}
+                    onValueChange={(v) => v && handleStatusChange(v)}
+                  >
+                    <SelectTrigger className="w-full rounded-xl h-11 bg-muted/50 border-transparent hover:border-border transition-colors">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {JOB_CARD_STATUSES.map((status) => (
+                        <SelectItem key={status} value={status}>
+                          {STATUS_STYLE[status].label}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                  {statusError && <p className="text-xs text-destructive">{statusError}</p>}
+                </div>
+
+                <div className="pt-2 flex flex-col gap-2">
+                  <Button
+                    variant="outline"
+                    className="w-full justify-start rounded-xl h-11 bg-background hover:bg-muted/50"
+                    onClick={handleGenerateInvoice}
+                    disabled={isGeneratingInvoice}
+                  >
+                    <FileText className="mr-2 size-4 text-muted-foreground" />
+                    {isGeneratingInvoice ? "Generating..." : "Generate Invoice"}
+                  </Button>
+                  
+                  <Button
+                    variant="outline"
+                    className="w-full justify-start rounded-xl h-11 bg-background hover:bg-muted/50"
+                    onClick={handleCopyTrackingLink}
+                    disabled={isCreatingLink}
+                  >
+                    <LinkIcon className="mr-2 size-4 text-muted-foreground" />
+                    {isCreatingLink ? "Creating..." : trackingCopied ? "Link Copied!" : "Copy Tracking Link"}
+                  </Button>
+
+                  {warrantyCard ? (
+                    <a
+                      href={`/api/warranty/${warrantyCard._id}/pdf`}
+                      target="_blank"
+                      rel="noreferrer"
+                      className="inline-flex h-11 w-full items-center justify-start rounded-xl border bg-primary/5 text-primary hover:bg-primary/10 px-4 text-sm font-medium transition-colors"
+                    >
+                      <ShieldCheck className="mr-2 size-4" />
+                      View Warranty PDF
+                    </a>
+                  ) : (
+                    <div className="w-full">
+                      <IssueWarrantyDialog
+                        jobCardId={jobCard._id}
+                        disabled={!["completed", "delivered"].includes(jobCard.status)}
+                      />
+                    </div>
+                  )}
+                </div>
+                {invoiceError && <p className="text-xs text-destructive">{invoiceError}</p>}
+                {trackingError && <p className="text-xs text-destructive">{trackingError}</p>}
+              </div>
+            ) : (
+              <div className="flex flex-col gap-2">
+                <Badge variant="secondary" className="w-fit">
+                  {STATUS_STYLE[jobCard.status].label}
+                </Badge>
+                <p className="text-sm text-muted-foreground">Only managers can perform billing actions.</p>
+              </div>
+            )}
+          </div>
+        </div>
+
+        {/* PARTS USED */}
+        <div className="rounded-2xl border bg-card shadow-sm overflow-hidden">
+          <div className="bg-muted/40 p-5 border-b">
+            <h3 className="font-semibold flex items-center gap-2">
+              <Package className="size-4 text-primary" /> 
+              Parts & Materials
+            </h3>
+          </div>
+          
+          <div className="p-0">
+            {jobCard.partsUsed.length === 0 ? (
+              <div className="p-8 text-center">
+                <p className="text-sm text-muted-foreground">No parts recorded.</p>
+              </div>
+            ) : (
+              <div className="divide-y max-h-[300px] overflow-y-auto">
+                {jobCard.partsUsed.map((part) => (
+                  <div key={part._id} className="flex items-center justify-between p-4 hover:bg-muted/20 transition-colors">
+                    <div className="min-w-0 flex-1">
+                      <p className="truncate text-sm font-medium">
+                        {typeof part.productId === "string" ? part.productId : part.productId.name}
+                      </p>
+                      {typeof part.productId !== "string" && (
+                        <p className="text-xs text-muted-foreground font-mono mt-0.5">{part.productId.sku}</p>
+                      )}
+                    </div>
+                    <Badge variant="outline" className="ml-4 shrink-0 rounded-full font-mono">
+                      x{part.quantity}
+                    </Badge>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+
           {isStaffManager && (
-            <div className="flex flex-wrap items-center gap-2">
-              <Select value={photoType} onValueChange={(v) => setPhotoType(v as "before" | "after")}>
-                <SelectTrigger className="w-32">
-                  <SelectValue />
+            <div className="border-t bg-muted/20 p-5 space-y-3">
+              <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Add Material</p>
+              <Select value={partProductId} onValueChange={(v) => setPartProductId(v ?? "")}>
+                <SelectTrigger className="w-full rounded-xl bg-background">
+                  <SelectValue placeholder="Select product" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="before">Before</SelectItem>
-                  <SelectItem value="after">After</SelectItem>
+                  {products.map((p) => (
+                    <SelectItem key={p._id} value={p._id}>
+                      {p.name} ({p.sku})
+                    </SelectItem>
+                  ))}
                 </SelectContent>
               </Select>
-              <Input ref={fileInputRef} type="file" accept="image/*" className="max-w-xs" />
-              <Button onClick={handlePhotoUpload} disabled={isUploadingPhoto} size="sm">
-                {isUploadingPhoto ? "Uploading..." : "Upload"}
-              </Button>
-            </div>
-          )}
-          {photoError && <p className="text-sm text-destructive">{photoError}</p>}
-        </CardContent>
-      </Card>
-
-      <Card>
-        <CardHeader>
-          <CardTitle>Parts Used</CardTitle>
-        </CardHeader>
-        <CardContent className="space-y-4">
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead>Product</TableHead>
-                <TableHead>Quantity</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {jobCard.partsUsed.length === 0 && (
-                <TableRow>
-                  <TableCell colSpan={2} className="text-center text-muted-foreground">
-                    No parts recorded yet.
-                  </TableCell>
-                </TableRow>
-              )}
-              {jobCard.partsUsed.map((part) => (
-                <TableRow key={part._id}>
-                  <TableCell>
-                    {typeof part.productId === "string"
-                      ? part.productId
-                      : `${part.productId.name} (${part.productId.sku})`}
-                  </TableCell>
-                  <TableCell>{part.quantity}</TableCell>
-                </TableRow>
-              ))}
-            </TableBody>
-          </Table>
-          {isStaffManager && (
-            <div className="flex flex-wrap items-end gap-2">
-              <div className="space-y-1">
-                <label className="text-xs text-muted-foreground">Product</label>
-                <Select value={partProductId} onValueChange={(v) => setPartProductId(v ?? "")}>
-                  <SelectTrigger className="w-56">
-                    <SelectValue placeholder="Select product" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {products.map((p) => (
-                      <SelectItem key={p._id} value={p._id}>
-                        {p.name} ({p.sku})
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-              <div className="space-y-1">
-                <label className="text-xs text-muted-foreground">Quantity</label>
+              <div className="flex gap-2">
                 <Input
                   type="number"
                   min={1}
                   value={partQuantity}
                   onChange={(e) => setPartQuantity(e.target.value)}
-                  className="w-24"
+                  className="rounded-xl bg-background"
+                  placeholder="Qty"
                 />
+                <Button onClick={handleAddPart} className="shrink-0 rounded-xl px-6">
+                  <Plus className="mr-1 size-4" /> Add
+                </Button>
               </div>
-              <Button size="sm" onClick={handleAddPart}>
-                Add Part
-              </Button>
+              {partError && <p className="text-xs text-destructive">{partError}</p>}
             </div>
           )}
-          {partError && <p className="text-sm text-destructive">{partError}</p>}
-        </CardContent>
-      </Card>
+        </div>
+        
+      </div>
     </div>
   );
 }

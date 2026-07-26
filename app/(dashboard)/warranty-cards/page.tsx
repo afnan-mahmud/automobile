@@ -41,7 +41,7 @@ export default async function WarrantyCardsPage() {
           </div>
           <p className="text-sm font-medium">No warranty cards yet</p>
           <p className="mt-1 text-xs text-muted-foreground">
-            Issue a warranty card from a completed job card
+            Issue a warranty card from a completed order
           </p>
         </div>
       )}
@@ -121,7 +121,7 @@ export default async function WarrantyCardsPage() {
                     <p className="font-medium">{card.customerId?.name ?? "—"}</p>
                   </div>
 
-                  {/* Job card reference */}
+                  {/* Order card reference */}
                   {card.jobCardId && (
                     <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
                       <FileText className="size-3.5 text-primary/60" />

@@ -27,7 +27,7 @@ export default async function InvoiceDetailPage({
           <p>
             Customer: {invoice.customerId?.name} ({invoice.customerId?.phone})
           </p>
-          <p>Job Card: {invoice.jobCardId?.jobCardNumber}</p>
+          <p>Order Card: {invoice.jobCardId?.jobCardNumber}</p>
         </CardContent>
       </Card>
 
