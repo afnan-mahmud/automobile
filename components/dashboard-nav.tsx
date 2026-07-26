@@ -22,7 +22,7 @@ import type { Role } from "@/models/User";
 
 const navItems: { href: string; label: string; icon: LucideIcon; roles: Role[] }[] = [
   { href: "/dashboard", label: "Dashboard", icon: LayoutDashboard, roles: ["admin", "manager", "technician"] },
-  { href: "/job-cards", label: "Job Cards", icon: Wrench, roles: ["admin", "manager", "technician"] },
+  { href: "/job-cards", label: "New Order", icon: Wrench, roles: ["admin", "manager", "technician"] },
   { href: "/customers", label: "Customers", icon: Users, roles: ["admin", "manager"] },
   { href: "/invoices", label: "Invoices", icon: FileText, roles: ["admin", "manager"] },
   { href: "/employees", label: "Employees", icon: UserCog, roles: ["admin"] },
