@@ -9,7 +9,7 @@ export function SignOutButton() {
     <Button
       variant="ghost"
       size="icon"
-      className="text-destructive hover:bg-destructive/10 hover:text-destructive rounded-full"
+      className="text-destructive hover:bg-destructive/10 hover:text-destructive rounded-xl"
       onClick={() => signOut({ callbackUrl: "/login" })}
       title="Logout"
     >
