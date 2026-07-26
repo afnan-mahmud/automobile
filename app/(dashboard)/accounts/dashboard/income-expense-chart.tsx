@@ -10,6 +10,7 @@ import {
   Tooltip,
   Legend,
 } from "recharts";
+import { CHART_COLORS } from "@/lib/chartColors";
 
 type DayRow = { date: string; income: number; expense: number };
 
@@ -27,8 +28,8 @@ export function IncomeExpenseChart({ data }: { data: DayRow[] }) {
           <YAxis tick={{ fontSize: 11 }} />
           <Tooltip />
           <Legend />
-          <Line type="monotone" dataKey="income" stroke="#10b981" name="Income" />
-          <Line type="monotone" dataKey="expense" stroke="#ef4444" name="Expense" />
+          <Line type="monotone" dataKey="income" stroke={CHART_COLORS.success} name="Income" />
+          <Line type="monotone" dataKey="expense" stroke={CHART_COLORS.destructive} name="Expense" />
         </LineChart>
       </ResponsiveContainer>
     </div>

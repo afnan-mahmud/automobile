@@ -10,6 +10,7 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
+import { lowStockVariant } from "@/lib/statusBadge";
 import { AddProductDialog } from "./add-product-dialog";
 import { StockActionDialog } from "./stock-action-dialog";
 
@@ -63,14 +64,14 @@ export function ProductList({ initialProducts }: { initialProducts: ProductRow[]
                 <TableCell className="capitalize">{product.category}</TableCell>
                 <TableCell>৳{product.unitPrice.toFixed(2)}</TableCell>
                 <TableCell>
-                  <span className={isLow ? "font-semibold text-destructive" : ""}>
+                  <div className="flex items-center">
                     {product.quantityInStock}
-                  </span>
-                  {isLow && (
-                    <Badge variant="outline" className="ml-2 border-destructive text-destructive">
-                      Low Stock
-                    </Badge>
-                  )}
+                    {isLow && (
+                      <Badge variant={lowStockVariant(true)} className="ml-2">
+                        Low Stock
+                      </Badge>
+                    )}
+                  </div>
                 </TableCell>
                 <TableCell>
                   <div className="flex gap-2">

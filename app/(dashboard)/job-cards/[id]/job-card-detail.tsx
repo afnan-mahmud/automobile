@@ -26,6 +26,7 @@ import {
   type JobCardStatus,
   type TaskStatus,
 } from "@/types/jobCard";
+import { jobCardStatusVariant, taskStatusVariant } from "@/lib/statusBadge";
 import { updateJobCardStatus, updateTaskStatus, addPartsUsed } from "@/actions/jobCards";
 import { generateInvoiceFromJobCard } from "@/actions/invoices";
 import { createTrackingLink } from "@/actions/tracking";
@@ -260,7 +261,9 @@ export function JobCardDetail({
               </SelectContent>
             </Select>
           ) : (
-            <Badge variant="secondary">{STATUS_LABEL[jobCard.status]}</Badge>
+            <Badge variant={jobCardStatusVariant(jobCard.status)}>
+              {STATUS_LABEL[jobCard.status]}
+            </Badge>
           )}
           {statusError && <p className="text-sm text-destructive">{statusError}</p>}
         </CardContent>
@@ -299,14 +302,16 @@ export function JobCardDetail({
                   <TableCell>
                     {new Date(task.assignedDate).toLocaleDateString()}
                     {task.carriedForwardFromDate && (
-                      <Badge variant="outline" className="ml-2 border-amber-500 text-amber-600">
+                      <Badge variant="warning" className="ml-2">
                         Carried forward from{" "}
                         {new Date(task.carriedForwardFromDate).toLocaleDateString()}
                       </Badge>
                     )}
                   </TableCell>
                   <TableCell>
-                    <Badge variant="secondary">{TASK_STATUS_LABEL[task.status]}</Badge>
+                    <Badge variant={taskStatusVariant(task.status)}>
+                      {TASK_STATUS_LABEL[task.status]}
+                    </Badge>
                   </TableCell>
                   <TableCell>
                     {canCompleteTask(task) && task.status !== "completed" && (

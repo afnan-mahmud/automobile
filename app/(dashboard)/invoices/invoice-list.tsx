@@ -12,6 +12,7 @@ import {
 } from "@/components/ui/table";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
+import { invoiceStatusVariant } from "@/lib/statusBadge";
 import { INVOICE_STATUSES, type InvoiceStatus } from "@/types/invoice";
 
 type InvoiceRow = {
@@ -79,7 +80,9 @@ export function InvoiceList({ initialInvoices }: { initialInvoices: InvoiceRow[]
                 <TableCell>{invoice.customerId?.name ?? "—"}</TableCell>
                 <TableCell>৳{invoice.total.toFixed(2)}</TableCell>
                 <TableCell>
-                  <Badge variant="secondary">{STATUS_LABEL[invoice.status]}</Badge>
+                  <Badge variant={invoiceStatusVariant(invoice.status)}>
+                    {STATUS_LABEL[invoice.status]}
+                  </Badge>
                 </TableCell>
               </TableRow>
             ))}

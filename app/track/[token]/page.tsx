@@ -14,5 +14,9 @@ export default async function TrackingPage({
     notFound();
   }
 
-  return <TrackingView token={token} initialData={summary} />;
+  return (
+    <div className="light min-h-screen bg-slate-50 text-slate-900">
+      <TrackingView token={token} initialData={summary} />
+    </div>
+  );
 }

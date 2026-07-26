@@ -29,6 +29,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { updateInvoice, markInvoicePaid } from "@/actions/invoices";
+import { invoiceStatusVariant } from "@/lib/statusBadge";
 import type { InvoiceStatus } from "@/types/invoice";
 
 type LineItem = { description: string; quantity: number; unitPrice: number; total: number };
@@ -241,7 +242,9 @@ export function InvoiceDetail({ invoice }: { invoice: Invoice }) {
               Discount ({invoice.discountPercent}%): -৳{invoice.discountAmount.toFixed(2)}
             </p>
             <p className="text-base font-semibold">Total: ৳{invoice.total.toFixed(2)}</p>
-            <Badge variant="secondary">{STATUS_LABEL[invoice.status]}</Badge>
+            <Badge variant={invoiceStatusVariant(invoice.status)}>
+              {STATUS_LABEL[invoice.status]}
+            </Badge>
           </div>
         </CardContent>
       </Card>

@@ -12,6 +12,7 @@ import {
 } from "@/components/ui/table";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
+import { jobCardStatusVariant } from "@/lib/statusBadge";
 import { JOB_CARD_STATUSES, type JobCardStatus } from "@/types/jobCard";
 
 type JobCardRow = {
@@ -85,7 +86,7 @@ export function JobCardList({ initialJobCards }: { initialJobCards: JobCardRow[]
                 <TableCell>{jc.vehicle?.registrationNumber ?? "—"}</TableCell>
                 <TableCell>{jc.customer?.name ?? "—"}</TableCell>
                 <TableCell>
-                  <Badge variant="secondary">{STATUS_LABEL[jc.status]}</Badge>
+                  <Badge variant={jobCardStatusVariant(jc.status)}>{STATUS_LABEL[jc.status]}</Badge>
                 </TableCell>
                 <TableCell>
                   {jc.taskCompleted}/{jc.taskTotal}

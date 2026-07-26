@@ -9,6 +9,7 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
+import { positiveNegativeVariant } from "@/lib/statusBadge";
 import { AssignDiscountDialog } from "./assign-discount-dialog";
 
 type DiscountCardRow = {
@@ -61,7 +62,7 @@ export function DiscountCardList({ initialCards }: { initialCards: DiscountCardR
                   {card.validTo ? new Date(card.validTo).toLocaleDateString() : "Indefinite"}
                 </TableCell>
                 <TableCell>
-                  <Badge variant={expired ? "outline" : "secondary"}>
+                  <Badge variant={expired ? "outline" : positiveNegativeVariant(true)}>
                     {expired ? "Expired" : "Active"}
                   </Badge>
                 </TableCell>

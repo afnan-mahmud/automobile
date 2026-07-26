@@ -1,6 +1,8 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { StatCard } from "@/components/stat-card";
 import { requirePageRole } from "@/lib/auth";
 import { getFinanceDashboardSummary, getDailyIncomeExpense } from "@/actions/accounts";
+import { CHART_COLORS } from "@/lib/chartColors";
 import { IncomeExpenseChart } from "./income-expense-chart";
 
 export default async function FinanceDashboardPage() {
@@ -11,43 +13,36 @@ export default async function FinanceDashboardPage() {
     getDailyIncomeExpense(30),
   ]);
 
+  const incomeSparkline = daily.map((d: { income: number }) => ({ value: d.income }));
+  const expenseSparkline = daily.map((d: { expense: number }) => ({ value: d.expense }));
+  const profitSparkline = daily.map((d: { income: number; expense: number }) => ({
+    value: d.income - d.expense,
+  }));
+
   return (
     <div className="space-y-6">
       <h2 className="text-xl font-semibold">Finance Dashboard</h2>
 
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
-        <Card>
-          <CardHeader>
-            <CardTitle className="text-sm text-muted-foreground">Total Sales</CardTitle>
-          </CardHeader>
-          <CardContent className="text-2xl font-semibold">
-            ৳{summary.totalIncome.toFixed(2)}
-          </CardContent>
-        </Card>
-        <Card>
-          <CardHeader>
-            <CardTitle className="text-sm text-muted-foreground">Net Profit</CardTitle>
-          </CardHeader>
-          <CardContent className="text-2xl font-semibold">
-            ৳{summary.netProfit.toFixed(2)}
-          </CardContent>
-        </Card>
-        <Card>
-          <CardHeader>
-            <CardTitle className="text-sm text-muted-foreground">Outstanding Dues</CardTitle>
-          </CardHeader>
-          <CardContent className="text-2xl font-semibold">
-            ৳{summary.outstandingDues.toFixed(2)}
-          </CardContent>
-        </Card>
-        <Card>
-          <CardHeader>
-            <CardTitle className="text-sm text-muted-foreground">Total Expense</CardTitle>
-          </CardHeader>
-          <CardContent className="text-2xl font-semibold">
-            ৳{summary.totalExpense.toFixed(2)}
-          </CardContent>
-        </Card>
+        <StatCard
+          title="Total Sales"
+          value={`৳${summary.totalIncome.toFixed(2)}`}
+          sparkline={incomeSparkline}
+          sparklineColor={CHART_COLORS.success}
+        />
+        <StatCard
+          title="Net Profit"
+          value={`৳${summary.netProfit.toFixed(2)}`}
+          sparkline={profitSparkline}
+          sparklineColor={CHART_COLORS.chart3}
+        />
+        <StatCard title="Outstanding Dues" value={`৳${summary.outstandingDues.toFixed(2)}`} />
+        <StatCard
+          title="Total Expense"
+          value={`৳${summary.totalExpense.toFixed(2)}`}
+          sparkline={expenseSparkline}
+          sparklineColor={CHART_COLORS.destructive}
+        />
       </div>
 
       <Card>
@@ -58,7 +53,7 @@ export default async function FinanceDashboardPage() {
           {summary.byPaymentMethod.map((p) => (
             <div key={p.paymentMethod} className="space-y-1">
               <p className="font-medium capitalize">{p.paymentMethod.replace("_", " ")}</p>
-              <p className="text-emerald-600">Income: ৳{p.income.toFixed(2)}</p>
+              <p className="text-success">Income: ৳{p.income.toFixed(2)}</p>
               <p className="text-destructive">Expense: ৳{p.expense.toFixed(2)}</p>
             </div>
           ))}

@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import { jobCardStatusVariant, taskStatusVariant } from "@/lib/statusBadge";
 import type { JobCardStatus, TaskStatus } from "@/types/jobCard";
 
 type Task = {
@@ -84,7 +85,7 @@ export function TrackingView({
               {data.vehicle.make ? ` — ${data.vehicle.make} ${data.vehicle.model ?? ""}` : ""}
             </p>
           )}
-          <Badge variant="secondary">{STATUS_LABEL[data.status]}</Badge>
+          <Badge variant={jobCardStatusVariant(data.status)}>{STATUS_LABEL[data.status]}</Badge>
 
           <div className="space-y-1">
             <div className="h-2 w-full overflow-hidden rounded-full bg-muted">
@@ -100,7 +101,7 @@ export function TrackingView({
             {data.tasks.map((task, index) => (
               <li key={index} className="flex items-center justify-between text-sm">
                 <span>{task.description}</span>
-                <Badge variant="outline">{TASK_STATUS_LABEL[task.status]}</Badge>
+                <Badge variant={taskStatusVariant(task.status)}>{TASK_STATUS_LABEL[task.status]}</Badge>
               </li>
             ))}
           </ul>

@@ -10,6 +10,7 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
+import { positiveNegativeVariant } from "@/lib/statusBadge";
 import {
   Select,
   SelectContent,
@@ -90,12 +91,12 @@ export function TransactionList({
             <TableRow key={t._id}>
               <TableCell>{new Date(t.date).toLocaleDateString()}</TableCell>
               <TableCell>
-                <Badge variant={t.type === "income" ? "secondary" : "outline"} className="capitalize">
+                <Badge variant={positiveNegativeVariant(t.type === "income")} className="capitalize">
                   {t.type}
                 </Badge>
               </TableCell>
               <TableCell className="capitalize">{t.category.replace("_", " ")}</TableCell>
-              <TableCell className={t.type === "income" ? "text-emerald-600" : "text-destructive"}>
+              <TableCell className={t.type === "income" ? "text-success" : "text-destructive"}>
                 {t.type === "income" ? "+" : "-"}৳{t.amount.toFixed(2)}
               </TableCell>
               <TableCell className="capitalize">{t.paymentMethod.replace("_", " ")}</TableCell>

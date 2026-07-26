@@ -10,6 +10,7 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
+import { positiveNegativeVariant } from "@/lib/statusBadge";
 import { AddEmployeeDialog } from "./add-employee-dialog";
 
 type EmployeeRow = {
@@ -56,7 +57,7 @@ export function EmployeeList({ initialEmployees }: { initialEmployees: EmployeeR
               <TableCell>{emp.designation || "—"}</TableCell>
               <TableCell>৳{emp.hourlyRate}</TableCell>
               <TableCell>
-                <Badge variant={emp.active ? "secondary" : "outline"}>
+                <Badge variant={emp.active ? positiveNegativeVariant(true) : "outline"}>
                   {emp.active ? "Active" : "Inactive"}
                 </Badge>
               </TableCell>

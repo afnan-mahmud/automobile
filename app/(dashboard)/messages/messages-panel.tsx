@@ -16,6 +16,7 @@ import {
 } from "@/components/ui/table";
 import { searchCustomers } from "@/actions/customers";
 import { sendReminderMessage, listMessageLogs } from "@/actions/messages";
+import { messageStatusVariant } from "@/lib/statusBadge";
 
 type Customer = { _id: string; name: string; phone: string };
 
@@ -185,9 +186,7 @@ export function MessagesPanel({ initialLogs }: { initialLogs: MessageLogRow[] })
                   <TableCell>{log.customerId?.name ?? "—"}</TableCell>
                   <TableCell className="max-w-xs truncate">{log.message}</TableCell>
                   <TableCell>
-                    <Badge variant={log.status === "sent" ? "secondary" : "outline"}>
-                      {log.status}
-                    </Badge>
+                    <Badge variant={messageStatusVariant(log.status)}>{log.status}</Badge>
                   </TableCell>
                 </TableRow>
               ))}
