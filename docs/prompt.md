@@ -102,7 +102,7 @@ Acceptance criteria:
 
 ---
 
-## Phase 2 — Customers & Vehicles
+## Phase 2 — Customers & Vehicles - Completed
 
 ```
 Build the Customer and Vehicle management module. Reference
@@ -141,7 +141,7 @@ Acceptance criteria:
 
 ---
 
-## Phase 3 — Job Cards & Tasks
+## Phase 3 — Job Cards & Tasks - Completed
 
 ```
 Build the Job Card module — the core workflow of the system. Reference
@@ -190,7 +190,7 @@ Acceptance criteria:
 
 ---
 
-## Phase 4 — Invoices & PDF Generation
+## Phase 4 — Invoices & PDF Generation - Completed
 
 ```
 Build the Invoice module, generated from a Job Card, with PDF export and
@@ -235,7 +235,7 @@ Acceptance criteria:
 
 ---
 
-## Phase 5 — Employees, Attendance & Salary
+## Phase 5 — Employees, Attendance & Salary - Completed
 
 ```
 Build Employee profiles, daily attendance, and automatic salary calculation.
@@ -287,7 +287,7 @@ Acceptance criteria:
 
 ---
 
-## Phase 6 — Stock Management
+## Phase 6 — Stock Management - Completed
 
 ```
 Build Product/Stock management, wired into both retail sales and Job Card
@@ -333,7 +333,7 @@ Acceptance criteria:
 
 ---
 
-## Phase 7 — Accounts / Finance Dashboard
+## Phase 7 — Accounts / Finance Dashboard - Completed
 
 ```
 Build the full Accounts module — manual transaction entry plus an
@@ -378,7 +378,7 @@ Acceptance criteria:
 
 ---
 
-## Phase 8 — Live Job Tracking
+## Phase 8 — Live Job Tracking - Completed
 
 ```
 Build the public, no-login shareable tracking link for customers. Reference
@@ -417,7 +417,7 @@ Acceptance criteria:
 
 ---
 
-## Phase 9 — SMS Reminders
+## Phase 9 — SMS Reminders - Completed
 
 ```
 Build the manual customer SMS reminder feature. Reference
@@ -457,7 +457,7 @@ Acceptance criteria:
 
 ---
 
-## Phase 10 — Warranty Cards
+## Phase 10 — Warranty Cards - Completed
 
 ```
 Build the digital Warranty Card feature tied to completed Job Cards.
@@ -493,7 +493,7 @@ Acceptance criteria:
 
 ---
 
-## Phase 11 — Discount Cards
+## Phase 11 — Discount Cards - Completed
 
 ```
 Build the Discount Card feature and wire it into real invoice generation
@@ -527,7 +527,7 @@ Acceptance criteria:
 
 ---
 
-## Phase 12 — Cross-Cutting: Task Carry-Forward
+## Phase 12 — Cross-Cutting: Task Carry-Forward - Completed
 
 ```
 Implement the task carry-forward rule described in docs/architecture.md
@@ -562,7 +562,7 @@ Acceptance criteria:
 
 ---
 
-## Phase 13 — Testing Pass
+## Phase 13 — Testing Pass - Completed
 
 ```
 Add automated tests across the modules built in Phases 1-12, plus a manual
@@ -604,7 +604,7 @@ Acceptance criteria:
 
 ---
 
-## Phase 14 — Deployment to VPS
+## Phase 14 — Deployment to VPS - Completed (artifacts only; no live VPS access)
 
 ```
 Deploy the completed application to a production VPS per

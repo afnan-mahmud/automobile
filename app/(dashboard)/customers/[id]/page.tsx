@@ -8,9 +8,12 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
+import { Badge } from "@/components/ui/badge";
 import { requirePageRole } from "@/lib/auth";
 import { getCustomerWithVehicles } from "@/actions/customers";
+import { getActiveDiscountCardForCustomer } from "@/actions/discountCards";
 import { AddVehicleDialog } from "./add-vehicle-dialog";
+import { AssignDiscountDialog } from "../../discount-cards/assign-discount-dialog";
 
 export default async function CustomerDetailPage({
   params,
@@ -26,17 +29,24 @@ export default async function CustomerDetailPage({
   }
 
   const { customer, vehicles } = result;
+  const activeDiscountCard = await getActiveDiscountCardForCustomer(id);
 
   return (
     <div className="space-y-6">
       <Card>
-        <CardHeader>
+        <CardHeader className="flex flex-row items-center justify-between">
           <CardTitle>{customer.name}</CardTitle>
+          <AssignDiscountDialog presetCustomerId={id} />
         </CardHeader>
         <CardContent className="space-y-1 text-sm text-muted-foreground">
           <p>Phone: {customer.phone}</p>
           {customer.email && <p>Email: {customer.email}</p>}
           {customer.address && <p>Address: {customer.address}</p>}
+          {activeDiscountCard && (
+            <Badge variant="secondary" className="mt-1">
+              {activeDiscountCard.discountPercent}% discount active
+            </Badge>
+          )}
         </CardContent>
       </Card>
 
