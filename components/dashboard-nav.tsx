@@ -2,21 +2,37 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import {
+  LayoutDashboard,
+  Wrench,
+  Users,
+  FileText,
+  UserCog,
+  CalendarCheck,
+  Wallet,
+  Package,
+  Landmark,
+  MessageSquare,
+  ShieldCheck,
+  Tag,
+  type LucideIcon,
+} from "lucide-react";
 import { cn } from "@/lib/utils";
 import type { Role } from "@/models/User";
 
-const navItems: { href: string; label: string; roles: Role[] }[] = [
-  { href: "/job-cards", label: "Job Cards", roles: ["admin", "manager", "technician"] },
-  { href: "/customers", label: "Customers", roles: ["admin", "manager"] },
-  { href: "/invoices", label: "Invoices", roles: ["admin", "manager"] },
-  { href: "/employees", label: "Employees", roles: ["admin"] },
-  { href: "/attendance", label: "Attendance", roles: ["admin", "manager"] },
-  { href: "/salary", label: "Salary", roles: ["admin"] },
-  { href: "/stock", label: "Stock", roles: ["admin", "manager"] },
-  { href: "/accounts", label: "Accounts", roles: ["admin", "manager"] },
-  { href: "/messages", label: "Messages", roles: ["admin", "manager"] },
-  { href: "/warranty-cards", label: "Warranty Cards", roles: ["admin", "manager"] },
-  { href: "/discount-cards", label: "Discount Cards", roles: ["admin", "manager"] },
+const navItems: { href: string; label: string; icon: LucideIcon; roles: Role[] }[] = [
+  { href: "/dashboard", label: "Dashboard", icon: LayoutDashboard, roles: ["admin", "manager", "technician"] },
+  { href: "/job-cards", label: "Job Cards", icon: Wrench, roles: ["admin", "manager", "technician"] },
+  { href: "/customers", label: "Customers", icon: Users, roles: ["admin", "manager"] },
+  { href: "/invoices", label: "Invoices", icon: FileText, roles: ["admin", "manager"] },
+  { href: "/employees", label: "Employees", icon: UserCog, roles: ["admin"] },
+  { href: "/attendance", label: "Attendance", icon: CalendarCheck, roles: ["admin", "manager"] },
+  { href: "/salary", label: "Salary", icon: Wallet, roles: ["admin"] },
+  { href: "/stock", label: "Stock", icon: Package, roles: ["admin", "manager"] },
+  { href: "/accounts", label: "Accounts", icon: Landmark, roles: ["admin", "manager"] },
+  { href: "/messages", label: "Messages", icon: MessageSquare, roles: ["admin", "manager"] },
+  { href: "/warranty-cards", label: "Warranty Cards", icon: ShieldCheck, roles: ["admin", "manager"] },
+  { href: "/discount-cards", label: "Discount Cards", icon: Tag, roles: ["admin", "manager"] },
 ];
 
 export function DashboardNav({ role }: { role: Role }) {
@@ -24,20 +40,25 @@ export function DashboardNav({ role }: { role: Role }) {
   const visibleItems = navItems.filter((item) => item.roles.includes(role));
 
   return (
-    <nav className="flex flex-col gap-1 p-4">
+    <nav className="flex flex-col gap-1 p-3">
       {visibleItems.map((item) => {
-        const isActive = pathname.startsWith(item.href);
+        const isActive =
+          item.href === "/dashboard"
+            ? pathname === "/dashboard"
+            : pathname.startsWith(item.href);
+        const Icon = item.icon;
         return (
           <Link
             key={item.href}
             href={item.href}
             className={cn(
-              "rounded-md px-3 py-2 text-sm font-medium transition-colors",
+              "flex items-center gap-3 rounded-xl px-3 py-2 text-sm font-medium transition-colors",
               isActive
                 ? "bg-primary text-primary-foreground"
-                : "text-muted-foreground hover:bg-accent hover:text-accent-foreground"
+                : "text-sidebar-foreground/70 hover:bg-sidebar-accent hover:text-sidebar-foreground"
             )}
           >
+            <Icon className="size-4 shrink-0" />
             {item.label}
           </Link>
         );
