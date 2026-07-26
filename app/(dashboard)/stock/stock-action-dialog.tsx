@@ -4,7 +4,6 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
 import {
   Dialog,
   DialogContent,
@@ -20,6 +19,8 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { recordStockPurchase, recordRetailSale } from "@/actions/stock";
+import { FormField, FormError, fieldInputClass, fieldSelectClass } from "@/components/ui/form-field";
+import { Package, CreditCard } from "lucide-react";
 
 export function StockActionDialog({
   productId,
@@ -69,31 +70,38 @@ export function StockActionDialog({
           </Button>
         }
       />
-      <DialogContent>
+      <DialogContent className="sm:max-w-sm">
         <DialogHeader>
           <DialogTitle>
             {mode === "purchase" ? "Record Stock Purchase" : "Sell Item"} — {productName}
           </DialogTitle>
         </DialogHeader>
-        <div className="space-y-4">
-          <div className="space-y-1">
-            <Label>Quantity</Label>
-            <Input
-              type="number"
-              min={1}
-              value={quantity}
-              onChange={(e) => setQuantity(e.target.value)}
-            />
-          </div>
+        <div className="space-y-4 pt-1">
+          <FormField label="Quantity" htmlFor="stock-qty">
+            <div className="flex items-center gap-2 px-3">
+              <Package className="size-4 shrink-0 text-muted-foreground" />
+              <Input
+                id="stock-qty"
+                type="number"
+                min={1}
+                className={fieldInputClass}
+                value={quantity}
+                onChange={(e) => setQuantity(e.target.value)}
+              />
+            </div>
+          </FormField>
+
           {mode === "sell" && (
-            <div className="space-y-1">
-              <Label>Payment Method</Label>
+            <FormField label="Payment Method">
               <Select
                 value={paymentMethod}
                 onValueChange={(v) => v && setPaymentMethod(v as typeof paymentMethod)}
               >
-                <SelectTrigger className="w-full">
-                  <SelectValue />
+                <SelectTrigger className={`w-full ${fieldSelectClass} px-3`}>
+                  <div className="flex items-center gap-2">
+                    <CreditCard className="size-4 shrink-0 text-muted-foreground" />
+                    <SelectValue />
+                  </div>
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="cash">Cash</SelectItem>
@@ -101,9 +109,11 @@ export function StockActionDialog({
                   <SelectItem value="mobile_banking">Mobile Banking</SelectItem>
                 </SelectContent>
               </Select>
-            </div>
+            </FormField>
           )}
-          {error && <p className="text-sm text-destructive">{error}</p>}
+
+          <FormError message={error} />
+
           <Button onClick={handleSubmit} disabled={isSubmitting} className="w-full">
             {isSubmitting ? "Saving..." : "Confirm"}
           </Button>

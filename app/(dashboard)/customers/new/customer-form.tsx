@@ -7,8 +7,9 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
 import { createCustomer } from "@/actions/customers";
+import { FormField, FormError, fieldInputClass } from "@/components/ui/form-field";
+import { User, Phone, Mail, MapPin } from "lucide-react";
 
 const formSchema = z.object({
   name: z.string().min(1, "Name is required"),
@@ -42,39 +43,61 @@ export function CustomerForm() {
   }
 
   return (
-    <form onSubmit={handleSubmit(onSubmit)} className="max-w-sm space-y-4">
-      <div className="space-y-2">
-        <Label htmlFor="name">Name</Label>
-        <Input id="name" {...register("name")} />
-        {errors.name && (
-          <p className="text-sm text-destructive">{errors.name.message}</p>
-        )}
+    <form onSubmit={handleSubmit(onSubmit)} className="max-w-lg space-y-5">
+      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+        <FormField label="Full Name" htmlFor="name" error={errors.name?.message}>
+          <div className="flex items-center gap-2 px-3">
+            <User className="size-4 shrink-0 text-muted-foreground" />
+            <Input
+              id="name"
+              placeholder="e.g. Karim Hossain"
+              className={fieldInputClass}
+              {...register("name")}
+            />
+          </div>
+        </FormField>
+
+        <FormField label="Phone" htmlFor="phone" error={errors.phone?.message}>
+          <div className="flex items-center gap-2 px-3">
+            <Phone className="size-4 shrink-0 text-muted-foreground" />
+            <Input
+              id="phone"
+              placeholder="01XXXXXXXXX"
+              className={fieldInputClass}
+              {...register("phone")}
+            />
+          </div>
+        </FormField>
       </div>
 
-      <div className="space-y-2">
-        <Label htmlFor="phone">Phone</Label>
-        <Input id="phone" {...register("phone")} />
-        {errors.phone && (
-          <p className="text-sm text-destructive">{errors.phone.message}</p>
-        )}
-      </div>
+      <FormField label="Email" htmlFor="email" optional error={errors.email?.message}>
+        <div className="flex items-center gap-2 px-3">
+          <Mail className="size-4 shrink-0 text-muted-foreground" />
+          <Input
+            id="email"
+            type="email"
+            placeholder="customer@email.com"
+            className={fieldInputClass}
+            {...register("email")}
+          />
+        </div>
+      </FormField>
 
-      <div className="space-y-2">
-        <Label htmlFor="email">Email (optional)</Label>
-        <Input id="email" type="email" {...register("email")} />
-        {errors.email && (
-          <p className="text-sm text-destructive">{errors.email.message}</p>
-        )}
-      </div>
+      <FormField label="Address" htmlFor="address" optional>
+        <div className="flex items-center gap-2 px-3">
+          <MapPin className="size-4 shrink-0 text-muted-foreground" />
+          <Input
+            id="address"
+            placeholder="Street, area, city..."
+            className={fieldInputClass}
+            {...register("address")}
+          />
+        </div>
+      </FormField>
 
-      <div className="space-y-2">
-        <Label htmlFor="address">Address (optional)</Label>
-        <Input id="address" {...register("address")} />
-      </div>
+      <FormError message={serverError} />
 
-      {serverError && <p className="text-sm text-destructive">{serverError}</p>}
-
-      <Button type="submit" disabled={isSubmitting}>
+      <Button type="submit" disabled={isSubmitting} className="w-full sm:w-auto px-8">
         {isSubmitting ? "Saving..." : "Save Customer"}
       </Button>
     </form>

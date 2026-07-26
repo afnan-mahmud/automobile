@@ -4,7 +4,6 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
 import {
   Dialog,
   DialogContent,
@@ -20,6 +19,8 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { addTask } from "@/actions/jobCards";
+import { FormField, FormError, fieldInputClass, fieldSelectClass } from "@/components/ui/form-field";
+import { FileText, User, Calendar } from "lucide-react";
 
 type Employee = { _id: string; name: string };
 
@@ -69,24 +70,31 @@ export function AssignTaskDialog({
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger render={<Button size="sm">Assign Task</Button>} />
-      <DialogContent>
+      <DialogContent className="sm:max-w-sm">
         <DialogHeader>
           <DialogTitle>Assign Task</DialogTitle>
         </DialogHeader>
-        <div className="space-y-4">
-          <div className="space-y-2">
-            <Label htmlFor="task-description">Description</Label>
-            <Input
-              id="task-description"
-              value={description}
-              onChange={(e) => setDescription(e.target.value)}
-            />
-          </div>
-          <div className="space-y-2">
-            <Label>Assign To</Label>
+        <div className="space-y-4 pt-1">
+          <FormField label="Description" htmlFor="task-description">
+            <div className="flex items-center gap-2 px-3">
+              <FileText className="size-4 shrink-0 text-muted-foreground" />
+              <Input
+                id="task-description"
+                placeholder="e.g. Change engine oil"
+                className={fieldInputClass}
+                value={description}
+                onChange={(e) => setDescription(e.target.value)}
+              />
+            </div>
+          </FormField>
+
+          <FormField label="Assign To">
             <Select value={assignedTo} onValueChange={(v) => setAssignedTo(v ?? "")}>
-              <SelectTrigger className="w-full">
-                <SelectValue placeholder="Technician" />
+              <SelectTrigger className={`w-full ${fieldSelectClass} px-3`}>
+                <div className="flex items-center gap-2">
+                  <User className="size-4 shrink-0 text-muted-foreground" />
+                  <SelectValue placeholder="Select technician" />
+                </div>
               </SelectTrigger>
               <SelectContent>
                 {employees.map((emp) => (
@@ -96,17 +104,23 @@ export function AssignTaskDialog({
                 ))}
               </SelectContent>
             </Select>
-          </div>
-          <div className="space-y-2">
-            <Label htmlFor="task-date">Date</Label>
-            <Input
-              id="task-date"
-              type="date"
-              value={assignedDate}
-              onChange={(e) => setAssignedDate(e.target.value)}
-            />
-          </div>
-          {error && <p className="text-sm text-destructive">{error}</p>}
+          </FormField>
+
+          <FormField label="Date" htmlFor="task-date">
+            <div className="flex items-center gap-2 px-3">
+              <Calendar className="size-4 shrink-0 text-muted-foreground" />
+              <Input
+                id="task-date"
+                type="date"
+                className={fieldInputClass}
+                value={assignedDate}
+                onChange={(e) => setAssignedDate(e.target.value)}
+              />
+            </div>
+          </FormField>
+
+          <FormError message={error} />
+
           <Button onClick={handleSubmit} disabled={isSubmitting} className="w-full">
             {isSubmitting ? "Saving..." : "Save Task"}
           </Button>
