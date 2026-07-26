@@ -90,16 +90,14 @@ export async function getTechnicianDashboard() {
   startOfWeek.setDate(startOfWeek.getDate() - startOfWeek.getDay());
   startOfWeek.setHours(0, 0, 0, 0);
 
-  const jobCards = await JobCard.find({ "tasks.assignedTo": employeeId })
-    .sort({ createdAt: -1 })
-    .limit(20)
-    .populate("vehicleId", "registrationNumber")
-    .populate("customerId", "name")
-    .lean();
+  // Unbounded: must scan every job card assigned to this technician so
+  // pending/completedThisWeek counts aren't silently truncated once a
+  // technician has more than a handful of job cards.
+  const allJobCards = await JobCard.find({ "tasks.assignedTo": employeeId }).lean();
 
   let pending = 0;
   let completedThisWeek = 0;
-  for (const jc of jobCards) {
+  for (const jc of allJobCards) {
     for (const task of jc.tasks) {
       if (task.assignedTo?.toString() !== employeeId) continue;
       if (task.status === "pending" || task.status === "in_progress") pending += 1;
@@ -113,7 +111,15 @@ export async function getTechnicianDashboard() {
     }
   }
 
-  const recentJobCards = jobCards.slice(0, 5).map((jc) => ({
+  // Bounded separately: only the preview list needs to stay capped at 5.
+  const recentJobCardDocs = await JobCard.find({ "tasks.assignedTo": employeeId })
+    .sort({ createdAt: -1 })
+    .limit(5)
+    .populate("vehicleId", "registrationNumber")
+    .populate("customerId", "name")
+    .lean();
+
+  const recentJobCards = recentJobCardDocs.map((jc) => ({
     _id: jc._id,
     jobCardNumber: jc.jobCardNumber,
     status: jc.status as JobCardStatus,

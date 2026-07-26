@@ -153,6 +153,46 @@ describe("getTechnicianDashboard", () => {
     expect(result.recentJobCards).toHaveLength(1);
   });
 
+  it("counts pending tasks across more than 20 job cards without truncation", async () => {
+    await connectToDatabase();
+    const myEmployeeId = new mongoose.Types.ObjectId();
+    const vehicleId = new mongoose.Types.ObjectId();
+    const customerId = new mongoose.Types.ObjectId();
+
+    const totalJobCards = 25;
+    for (let i = 0; i < totalJobCards; i += 1) {
+      await JobCard.create({
+        jobCardNumber: `JC-${i}`,
+        vehicleId,
+        customerId,
+        tasks: [
+          {
+            description: `Pending task ${i}`,
+            assignedTo: myEmployeeId,
+            status: "pending",
+            assignedDate: new Date(),
+          },
+        ],
+      });
+    }
+
+    setMockSession({
+      user: {
+        id: "507f1f77bcf86cd799439012",
+        role: "technician",
+        employeeId: myEmployeeId.toString(),
+      },
+    });
+
+    const result = await getTechnicianDashboard();
+
+    // Regression check: a naive .limit(20) on the query used to compute
+    // counts would silently cap this at 20 instead of the true total of 25.
+    expect(result.pending).toBe(totalJobCards);
+    // The preview list stays capped at 5 regardless of how many job cards exist.
+    expect(result.recentJobCards).toHaveLength(5);
+  });
+
   it("rejects a non-technician session", async () => {
     setMockSession({ user: { id: "507f1f77bcf86cd799439011", role: "admin" } });
     await expect(getTechnicianDashboard()).rejects.toThrow("Unauthorized");
