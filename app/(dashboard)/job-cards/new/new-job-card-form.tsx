@@ -4,15 +4,6 @@ import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table";
 import {
   Select,
   SelectContent,
@@ -32,9 +23,10 @@ import { createVehicle } from "@/actions/vehicles";
 import { createJobCard } from "@/actions/jobCards";
 import { FormField, FormError, fieldInputClass, fieldSelectClass } from "@/components/ui/form-field";
 import {
-  Search, User, Phone, Mail, Car, Hash, Calendar, Palette, Plus, X, UserCircle,
+  Search, User, Phone, Mail, Car, Hash, Calendar, Palette, Plus, X, UserCircle, Play, BadgeCheck
 } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { Badge } from "@/components/ui/badge";
 
 type Employee = { _id: string; name: string; designation?: string };
 type CustomerRow = { _id: string; name: string; phone: string };
@@ -184,195 +176,220 @@ export function NewJobCardForm({ employees }: { employees: Employee[] }) {
   const selectedVehicle = vehicles.find(v => v._id === vehicleId);
 
   return (
-    <div className="max-w-2xl space-y-6">
-      {/* Customer & Vehicle Card */}
-      <Card>
-        <CardHeader className="border-b pb-4">
-          <CardTitle className="flex items-center gap-2 text-base">
-            <UserCircle className="size-5 text-primary" />
-            Customer &amp; Vehicle
-          </CardTitle>
-        </CardHeader>
-        <CardContent className="space-y-5 pt-5">
-          {!selectedCustomer ? (
-            <div className="space-y-3">
-              <FormField label="Search Customer" htmlFor="customer-search">
-                <div className="flex items-center gap-2 px-3">
-                  <Search className="size-4 shrink-0 text-muted-foreground" />
-                  <Input
-                    id="customer-search"
-                    value={customerQuery}
-                    onChange={(e) => setCustomerQuery(e.target.value)}
-                    placeholder="Search by name or phone…"
-                    className={fieldInputClass}
-                  />
-                </div>
-              </FormField>
+    <div className="grid grid-cols-1 items-start gap-6 lg:grid-cols-[1fr_360px]">
+      
+      {/* ── MAIN COLUMN ── */}
+      <div className="space-y-6">
+        
+        {/* HERO BANNER */}
+        <div className="relative overflow-hidden rounded-3xl bg-gradient-to-r from-primary via-primary/80 to-purple-500 p-8 text-primary-foreground shadow-sm">
+          <div className="relative z-10 flex flex-col md:flex-row md:items-center justify-between gap-6">
+            <div>
+              <p className="text-sm font-semibold uppercase tracking-wider text-primary-foreground/80 mb-1">
+                New Request
+              </p>
+              <h1 className="text-3xl font-bold tracking-tight">
+                Create Order Card
+              </h1>
+              <p className="mt-2 text-primary-foreground/80 max-w-md text-sm leading-relaxed">
+                Start by searching for an existing customer or create a new profile. Assign a vehicle and list the required service tasks.
+              </p>
+            </div>
+          </div>
+          {/* Abstract decoration */}
+          <div className="absolute -right-8 -top-8 size-48 rounded-full bg-white/10 blur-3xl" />
+          <div className="absolute -bottom-12 right-16 size-32 rounded-full bg-black/10 blur-2xl" />
+        </div>
 
-              {/* Search results dropdown */}
+        {/* CUSTOMER & VEHICLE SELECTION */}
+        <div className="rounded-3xl border bg-card p-6 sm:p-8 shadow-sm">
+          <h3 className="mb-6 text-xl font-bold tracking-tight flex items-center gap-2">
+            <UserCircle className="size-5 text-primary" />
+            Client Details
+          </h3>
+          
+          {!selectedCustomer ? (
+            <div className="space-y-4">
+              <div className="relative">
+                <Search className="absolute left-4 top-3.5 size-5 text-muted-foreground" />
+                <Input
+                  id="customer-search"
+                  placeholder="Search customer by name or phone..."
+                  value={customerQuery}
+                  onChange={(e) => setCustomerQuery(e.target.value)}
+                  className="h-12 w-full rounded-2xl bg-muted/40 pl-11 text-base border-transparent hover:border-border focus:bg-background focus:border-primary transition-all"
+                  autoComplete="off"
+                />
+              </div>
+
+              {customerQuery.length > 0 && customers.length === 0 && (
+                <div className="rounded-2xl border border-dashed p-6 text-center bg-muted/20">
+                  <User className="mx-auto mb-2 size-8 text-muted-foreground/50" />
+                  <p className="text-sm font-medium text-foreground">No customer found</p>
+                  <Button
+                    variant="outline"
+                    className="mt-3 rounded-full"
+                    onClick={() => {
+                      setNewCustomer(prev => ({ ...prev, phone: customerQuery }));
+                      setIsCustomerModalOpen(true);
+                    }}
+                  >
+                    <Plus className="mr-2 size-4" /> Create New Customer
+                  </Button>
+                </div>
+              )}
+
               {customers.length > 0 && (
-                <div className="overflow-hidden rounded-xl border bg-background shadow-lg">
-                  {customers.map((c, i) => (
+                <div className="grid gap-2 sm:grid-cols-2">
+                  {customers.map((c) => (
                     <button
-                      type="button"
                       key={c._id}
+                      type="button"
+                      className="group flex items-center gap-4 rounded-2xl border p-4 text-left transition-all hover:bg-muted/40 hover:border-primary/30 focus:outline-none focus:ring-2 focus:ring-primary"
                       onClick={() => selectCustomer(c)}
-                      className={cn(
-                        "flex w-full items-center justify-between px-4 py-3 text-left text-sm transition-colors hover:bg-accent",
-                        i > 0 && "border-t"
-                      )}
                     >
-                      <span className="flex items-center gap-2 font-medium">
-                        <User className="size-4 text-muted-foreground" />
-                        {c.name}
-                      </span>
-                      <span className="text-muted-foreground">{c.phone}</span>
+                      <div className="flex size-10 items-center justify-center rounded-full bg-primary/10 text-primary group-hover:bg-primary group-hover:text-primary-foreground transition-colors">
+                        <User className="size-5" />
+                      </div>
+                      <div className="min-w-0">
+                        <p className="font-semibold text-foreground truncate">{c.name}</p>
+                        <p className="text-xs text-muted-foreground mt-0.5">{c.phone}</p>
+                      </div>
                     </button>
                   ))}
                 </div>
               )}
-
-              {/* No results — show Create Customer button */}
-              {customerQuery && customers.length === 0 && (
-                <div className="flex items-center gap-3 rounded-xl border border-dashed bg-muted/30 px-4 py-3">
-                  <p className="flex-1 text-sm text-muted-foreground">
-                    No customer found for <span className="font-medium text-foreground">&quot;{customerQuery}&quot;</span>
-                  </p>
-                  <Button
-                    type="button"
-                    size="sm"
-                    onClick={() => {
-                      setNewCustomer({ name: "", phone: customerQuery, email: "" });
-                      setIsCustomerModalOpen(true);
-                    }}
-                  >
-                    <Plus className="mr-1.5 size-3.5" />
-                    Create Customer
-                  </Button>
-                </div>
-              )}
             </div>
           ) : (
-            <div className="space-y-4">
-              {/* Selected customer chip */}
-              <div className="flex items-center justify-between rounded-xl bg-primary/8 border border-primary/20 px-4 py-3">
-                <div className="flex items-center gap-3">
-                  <div className="flex size-9 items-center justify-center rounded-full bg-primary/15">
-                    <User className="size-4 text-primary" />
+            <div className="space-y-6">
+              {/* Selected Customer Card */}
+              <div className="flex items-center justify-between rounded-2xl border bg-primary/5 p-4 shadow-sm border-primary/20">
+                <div className="flex items-center gap-4">
+                  <div className="flex size-12 items-center justify-center rounded-full bg-primary/20 text-primary">
+                    <User className="size-6" />
                   </div>
                   <div>
-                    <p className="text-sm font-semibold">{selectedCustomer.name}</p>
-                    <p className="text-xs text-muted-foreground">{selectedCustomer.phone}</p>
+                    <p className="font-bold text-foreground">{selectedCustomer.name}</p>
+                    <p className="text-sm text-muted-foreground mt-0.5">{selectedCustomer.phone}</p>
                   </div>
                 </div>
                 <Button
-                  type="button"
                   variant="ghost"
-                  size="sm"
+                  size="icon"
+                  className="rounded-full hover:bg-destructive/10 hover:text-destructive"
                   onClick={() => {
                     setSelectedCustomer(null);
+                    setCustomerQuery("");
                     setVehicles([]);
                     setVehicleId("");
-                    setCustomerQuery("");
                   }}
+                  title="Change customer"
                 >
-                  Change
+                  <X className="size-5" />
                 </Button>
               </div>
 
-              {/* Vehicle selector */}
-              <div className="space-y-2">
+              {/* Vehicle Selection */}
+              <div className="space-y-4 pt-2">
                 <div className="flex items-center justify-between">
-                  <span className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">Vehicle</span>
+                  <label className="text-sm font-semibold text-muted-foreground uppercase tracking-wider">Select Vehicle</label>
                   <Button
-                    type="button"
-                    variant="outline"
+                    variant="ghost"
                     size="sm"
-                    onClick={() => {
-                      setNewVehicle({ registrationNumber: "", make: "", model: "", year: "", color: "" });
-                      setIsVehicleModalOpen(true);
-                    }}
+                    className="h-8 rounded-full text-xs font-medium text-primary hover:bg-primary/10 hover:text-primary"
+                    onClick={() => setIsVehicleModalOpen(true)}
                   >
-                    <Plus className="mr-1.5 size-3.5" />
-                    Add Vehicle
+                    <Plus className="mr-1 size-3.5" /> Add Vehicle
                   </Button>
                 </div>
 
                 {vehicles.length === 0 ? (
-                  <div className="rounded-xl border border-dashed bg-muted/30 px-4 py-4 text-center">
-                    <Car className="mx-auto mb-1.5 size-6 text-muted-foreground/50" />
-                    <p className="text-sm text-muted-foreground">No vehicles on file for this customer.</p>
+                  <div className="rounded-2xl border border-dashed p-6 text-center bg-muted/20">
+                    <Car className="mx-auto mb-2 size-8 text-muted-foreground/50" />
+                    <p className="text-sm font-medium">No vehicles registered</p>
+                    <p className="text-xs text-muted-foreground mt-1">Please add a vehicle to continue</p>
                   </div>
                 ) : (
-                  <Select value={vehicleId} onValueChange={(v) => setVehicleId(v ?? "")}>
-                    <SelectTrigger className="w-full">
-                      {selectedVehicle ? (
-                        <div className="flex items-center gap-2">
-                          <Car className="size-4 text-muted-foreground" />
-                          <span>
-                            {selectedVehicle.registrationNumber}
-                            {selectedVehicle.make && ` — ${selectedVehicle.make} ${selectedVehicle.model ?? ""}`}
-                          </span>
-                        </div>
-                      ) : (
-                        <SelectValue placeholder="Select a vehicle" />
-                      )}
-                    </SelectTrigger>
-                    <SelectContent>
-                      {vehicles.map((v) => (
-                        <SelectItem key={v._id} value={v._id}>
-                          {`${v.registrationNumber}${v.make ? ` — ${v.make} ${v.model ?? ""}` : ""}`.trim()}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
+                  <div className="grid gap-3 sm:grid-cols-2">
+                    {vehicles.map((v) => {
+                      const isSelected = vehicleId === v._id;
+                      return (
+                        <button
+                          key={v._id}
+                          type="button"
+                          className={cn(
+                            "group flex items-center gap-4 rounded-2xl border p-4 text-left transition-all focus:outline-none focus:ring-2 focus:ring-primary",
+                            isSelected
+                              ? "bg-primary/5 border-primary ring-1 ring-primary"
+                              : "hover:bg-muted/40 hover:border-primary/30"
+                          )}
+                          onClick={() => setVehicleId(v._id)}
+                        >
+                          <div className={cn(
+                            "flex size-10 items-center justify-center rounded-full transition-colors",
+                            isSelected ? "bg-primary text-primary-foreground" : "bg-muted text-muted-foreground group-hover:bg-primary/10 group-hover:text-primary"
+                          )}>
+                            <Car className="size-5" />
+                          </div>
+                          <div className="min-w-0">
+                            <p className={cn("font-semibold truncate", isSelected ? "text-primary" : "text-foreground")}>
+                              {v.registrationNumber}
+                            </p>
+                            {(v.make || v.model) && (
+                              <p className="text-xs text-muted-foreground mt-0.5 truncate">
+                                {v.make} {v.model}
+                              </p>
+                            )}
+                          </div>
+                          {isSelected && (
+                            <BadgeCheck className="ml-auto size-5 text-primary shrink-0" />
+                          )}
+                        </button>
+                      );
+                    })}
+                  </div>
                 )}
               </div>
             </div>
           )}
-        </CardContent>
-      </Card>
+        </div>
 
-      {/* Tasks Card */}
-      <Card>
-        <CardHeader className="border-b pb-4">
-          <div className="flex items-center justify-between">
-            <CardTitle className="flex items-center gap-2 text-base">
-              <svg className="size-5 text-primary" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2}>
-                <path d="M9 11l3 3L22 4"/><path d="M21 12v7a2 2 0 01-2 2H5a2 2 0 01-2-2V5a2 2 0 012-2h11"/>
-              </svg>
-              Initial Tasks
-            </CardTitle>
-            <Button type="button" variant="outline" size="sm" onClick={addTaskRow}>
-              <Plus className="mr-1.5 size-3.5" />
-              Add Task
+        {/* TASKS ASSIGNMENT */}
+        <div className="rounded-3xl border bg-card p-6 sm:p-8 shadow-sm">
+          <div className="mb-6 flex items-center justify-between">
+            <h3 className="text-xl font-bold tracking-tight flex items-center gap-2">
+              <Play className="size-5 text-primary" />
+              Service Tasks
+            </h3>
+            <Button
+              variant="outline"
+              size="sm"
+              className="rounded-full h-8"
+              onClick={addTaskRow}
+            >
+              <Plus className="mr-1.5 size-3.5" /> Add Task
             </Button>
           </div>
-        </CardHeader>
-        <CardContent className="pt-4">
-          {tasks.length === 0 ? (
-            <p className="py-6 text-center text-sm text-muted-foreground">No tasks yet. Click &ldquo;Add Task&rdquo; to get started.</p>
-          ) : (
-            <div className="space-y-3">
-              {tasks.map((task, index) => (
-                <div
-                  key={index}
-                  className="grid grid-cols-[1fr_auto_auto_auto] items-center gap-2 rounded-xl border bg-muted/20 p-3"
-                >
+
+          <div className="space-y-3">
+            {tasks.map((task, index) => (
+              <div key={index} className="group relative flex flex-col sm:flex-row sm:items-center gap-3 rounded-2xl border bg-muted/20 p-3 transition-all hover:bg-muted/40 focus-within:bg-muted/40 focus-within:border-primary/30">
+                <div className="flex-1 min-w-0">
                   <Input
+                    placeholder="Task description (e.g., Oil change, Brake inspection)..."
                     value={task.description}
                     onChange={(e) => updateTask(index, { description: e.target.value })}
-                    placeholder="e.g. Change engine oil"
-                    className="border-0 bg-transparent focus-visible:ring-0 text-sm"
+                    className="h-10 border-0 bg-transparent px-2 text-base font-medium shadow-none focus-visible:ring-0 placeholder:font-normal"
                   />
+                </div>
+                
+                <div className="flex items-center gap-2 sm:pl-3 sm:border-l sm:border-border/50 shrink-0">
                   <Select
                     value={task.assignedTo}
                     onValueChange={(v) => updateTask(index, { assignedTo: v ?? "" })}
                   >
-                    <SelectTrigger className="w-36 border-muted bg-background text-sm">
-                      <SelectValue placeholder="Assign to…">
-                        {employees.find(emp => emp._id === task.assignedTo)?.name || "Assign to…"}
-                      </SelectValue>
+                    <SelectTrigger className="w-[140px] h-9 rounded-xl border-transparent bg-muted/50 hover:bg-muted focus:ring-0">
+                      <SelectValue placeholder="Assign To" />
                     </SelectTrigger>
                     <SelectContent>
                       {employees.map((emp) => (
@@ -382,183 +399,228 @@ export function NewJobCardForm({ employees }: { employees: Employee[] }) {
                       ))}
                     </SelectContent>
                   </Select>
+
                   <Input
                     type="date"
                     value={task.assignedDate}
                     onChange={(e) => updateTask(index, { assignedDate: e.target.value })}
-                    className="w-36 border-muted bg-background text-sm"
+                    className="w-[140px] h-9 rounded-xl border-transparent bg-muted/50 hover:bg-muted focus-visible:ring-0 text-sm"
                   />
-                  <Button
-                    type="button"
-                    variant="ghost"
-                    size="icon"
-                    className="size-8 text-muted-foreground hover:text-destructive"
-                    onClick={() => removeTaskRow(index)}
-                  >
-                    <X className="size-4" />
-                  </Button>
+
+                  {tasks.length > 1 && (
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      className="size-9 rounded-xl text-muted-foreground hover:bg-destructive/10 hover:text-destructive shrink-0"
+                      onClick={() => removeTaskRow(index)}
+                      title="Remove task"
+                    >
+                      <X className="size-4" />
+                    </Button>
+                  )}
                 </div>
-              ))}
+              </div>
+            ))}
+          </div>
+        </div>
+
+      </div>
+
+      {/* ── SIDEBAR COLUMN ── */}
+      <div className="space-y-6">
+        
+        {/* ORDER SUMMARY */}
+        <div className="sticky top-6 rounded-3xl border bg-card shadow-sm overflow-hidden flex flex-col h-[calc(100vh-6rem)] max-h-[600px]">
+          <div className="bg-muted/40 p-6 border-b">
+            <h3 className="font-bold text-lg">Order Summary</h3>
+            <p className="text-sm text-muted-foreground mt-1">Review before saving</p>
+          </div>
+          
+          <div className="p-6 space-y-6 flex-1 overflow-y-auto">
+            <div className="space-y-1.5">
+              <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Customer</p>
+              {selectedCustomer ? (
+                <div className="flex items-center gap-3">
+                  <div className="flex size-8 shrink-0 items-center justify-center rounded-full bg-primary/10 text-primary">
+                    <User className="size-4" />
+                  </div>
+                  <p className="font-medium truncate">{selectedCustomer.name}</p>
+                </div>
+              ) : (
+                <p className="text-sm text-muted-foreground italic">Not selected</p>
+              )}
             </div>
-          )}
-        </CardContent>
-      </Card>
 
-      <FormError message={error} />
+            <div className="space-y-1.5">
+              <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Vehicle</p>
+              {selectedVehicle ? (
+                <div className="flex items-center gap-3">
+                  <div className="flex size-8 shrink-0 items-center justify-center rounded-full bg-primary/10 text-primary">
+                    <Car className="size-4" />
+                  </div>
+                  <div>
+                    <p className="font-medium">{selectedVehicle.registrationNumber}</p>
+                    {(selectedVehicle.make || selectedVehicle.model) && (
+                      <p className="text-xs text-muted-foreground">{selectedVehicle.make} {selectedVehicle.model}</p>
+                    )}
+                  </div>
+                </div>
+              ) : (
+                <p className="text-sm text-muted-foreground italic">Not selected</p>
+              )}
+            </div>
 
-      <Button onClick={handleSubmit} disabled={isSubmitting} className="px-8">
-        {isSubmitting ? "Creating..." : "Create New Order"}
-      </Button>
+            <div className="space-y-1.5">
+              <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Tasks Queue</p>
+              <div className="flex items-center gap-3">
+                <Badge variant="secondary" className="rounded-full px-3 py-1 font-mono text-base bg-muted/60">
+                  {tasks.filter(t => t.description.trim()).length}
+                </Badge>
+                <p className="text-sm font-medium">Valid tasks added</p>
+              </div>
+            </div>
 
-      {/* Customer Modal */}
+            {error && (
+              <div className="rounded-xl bg-destructive/10 p-3 text-sm text-destructive font-medium border border-destructive/20">
+                {error}
+              </div>
+            )}
+          </div>
+
+          <div className="p-6 border-t bg-muted/20">
+            <Button
+              className="w-full rounded-2xl h-14 text-base font-bold shadow-md shadow-primary/20"
+              size="lg"
+              onClick={handleSubmit}
+              disabled={isSubmitting || !selectedCustomer || !vehicleId}
+            >
+              {isSubmitting ? "Creating Order..." : "Create Order Card"}
+            </Button>
+          </div>
+        </div>
+
+      </div>
+
+      {/* CREATE CUSTOMER MODAL */}
       <Dialog open={isCustomerModalOpen} onOpenChange={setIsCustomerModalOpen}>
-        <DialogContent className="sm:max-w-sm">
-          <DialogHeader>
-            <DialogTitle>Create Customer</DialogTitle>
-          </DialogHeader>
-          <form onSubmit={handleCreateCustomer} className="space-y-4 pt-1">
-            <FormField label="Full Name" htmlFor="modal-cust-name">
-              <div className="flex items-center gap-2 px-3">
-                <User className="size-4 shrink-0 text-muted-foreground" />
+        <DialogContent className="sm:max-w-[425px] rounded-3xl">
+          <form onSubmit={handleCreateCustomer}>
+            <DialogHeader className="mb-4">
+              <DialogTitle>Create New Customer</DialogTitle>
+            </DialogHeader>
+            <div className="space-y-4">
+              <FormField label="Name" htmlFor="c-name" icon={<User className="size-4" />}>
                 <Input
-                  id="modal-cust-name"
-                  placeholder="Full name"
-                  className={fieldInputClass}
+                  id="c-name"
+                  required
                   value={newCustomer.name}
-                  onChange={e => setNewCustomer(prev => ({ ...prev, name: e.target.value }))}
-                  required
-                />
-              </div>
-            </FormField>
-
-            <FormField label="Phone" htmlFor="modal-cust-phone">
-              <div className="flex items-center gap-2 px-3">
-                <Phone className="size-4 shrink-0 text-muted-foreground" />
-                <Input
-                  id="modal-cust-phone"
-                  placeholder="01XXXXXXXXX"
+                  onChange={(e) => setNewCustomer({ ...newCustomer, name: e.target.value })}
                   className={fieldInputClass}
+                />
+              </FormField>
+              <FormField label="Phone" htmlFor="c-phone" icon={<Phone className="size-4" />}>
+                <Input
+                  id="c-phone"
+                  required
                   value={newCustomer.phone}
-                  onChange={e => setNewCustomer(prev => ({ ...prev, phone: e.target.value }))}
-                  required
+                  onChange={(e) => setNewCustomer({ ...newCustomer, phone: e.target.value })}
+                  className={fieldInputClass}
                 />
-              </div>
-            </FormField>
-
-            <FormField label="Email" htmlFor="modal-cust-email" optional>
-              <div className="flex items-center gap-2 px-3">
-                <Mail className="size-4 shrink-0 text-muted-foreground" />
+              </FormField>
+              <FormField label="Email (Optional)" htmlFor="c-email" icon={<Mail className="size-4" />}>
                 <Input
-                  id="modal-cust-email"
+                  id="c-email"
                   type="email"
-                  placeholder="customer@email.com"
-                  className={fieldInputClass}
                   value={newCustomer.email}
-                  onChange={e => setNewCustomer(prev => ({ ...prev, email: e.target.value }))}
-                />
-              </div>
-            </FormField>
-
-            <FormError message={modalError} />
-
-            <DialogFooter>
-              <Button type="button" variant="outline" onClick={() => setIsCustomerModalOpen(false)}>
-                Cancel
-              </Button>
-              <Button type="submit" disabled={isModalSubmitting}>
-                {isModalSubmitting ? "Saving..." : "Done"}
-              </Button>
-            </DialogFooter>
-          </form>
-        </DialogContent>
-      </Dialog>
-
-      {/* Vehicle Modal */}
-      <Dialog open={isVehicleModalOpen} onOpenChange={setIsVehicleModalOpen}>
-        <DialogContent className="sm:max-w-sm">
-          <DialogHeader>
-            <DialogTitle>Add Vehicle</DialogTitle>
-          </DialogHeader>
-          <form onSubmit={handleCreateVehicle} className="space-y-4 pt-1">
-            <FormField label="Registration Number" htmlFor="modal-veh-reg">
-              <div className="flex items-center gap-2 px-3">
-                <Hash className="size-4 shrink-0 text-muted-foreground" />
-                <Input
-                  id="modal-veh-reg"
-                  placeholder="DHAKA-METRO-GA-11-1234"
+                  onChange={(e) => setNewCustomer({ ...newCustomer, email: e.target.value })}
                   className={fieldInputClass}
-                  value={newVehicle.registrationNumber}
-                  onChange={e => setNewVehicle(prev => ({ ...prev, registrationNumber: e.target.value }))}
-                  required
-                />
-              </div>
-            </FormField>
-
-            <div className="grid grid-cols-2 gap-3">
-              <FormField label="Make" htmlFor="modal-veh-make" optional>
-                <div className="flex items-center gap-2 px-3">
-                  <Car className="size-4 shrink-0 text-muted-foreground" />
-                  <Input
-                    id="modal-veh-make"
-                    placeholder="Toyota"
-                    className={fieldInputClass}
-                    value={newVehicle.make}
-                    onChange={e => setNewVehicle(prev => ({ ...prev, make: e.target.value }))}
-                  />
-                </div>
-              </FormField>
-              <FormField label="Model" htmlFor="modal-veh-model" optional>
-                <Input
-                  id="modal-veh-model"
-                  placeholder="Corolla"
-                  className={`${fieldInputClass} px-3`}
-                  value={newVehicle.model}
-                  onChange={e => setNewVehicle(prev => ({ ...prev, model: e.target.value }))}
                 />
               </FormField>
+              {modalError && <FormError message={modalError} />}
             </div>
-
-            <div className="grid grid-cols-2 gap-3">
-              <FormField label="Year" htmlFor="modal-veh-year" optional>
-                <div className="flex items-center gap-2 px-3">
-                  <Calendar className="size-4 shrink-0 text-muted-foreground" />
-                  <Input
-                    id="modal-veh-year"
-                    type="number"
-                    placeholder="2020"
-                    className={fieldInputClass}
-                    value={newVehicle.year}
-                    onChange={e => setNewVehicle(prev => ({ ...prev, year: e.target.value }))}
-                  />
-                </div>
-              </FormField>
-              <FormField label="Color" htmlFor="modal-veh-color" optional>
-                <div className="flex items-center gap-2 px-3">
-                  <Palette className="size-4 shrink-0 text-muted-foreground" />
-                  <Input
-                    id="modal-veh-color"
-                    placeholder="White"
-                    className={fieldInputClass}
-                    value={newVehicle.color}
-                    onChange={e => setNewVehicle(prev => ({ ...prev, color: e.target.value }))}
-                  />
-                </div>
-              </FormField>
-            </div>
-
-            <FormError message={modalError} />
-
-            <DialogFooter>
-              <Button type="button" variant="outline" onClick={() => setIsVehicleModalOpen(false)}>
+            <DialogFooter className="mt-6">
+              <Button type="button" variant="ghost" onClick={() => setIsCustomerModalOpen(false)} className="rounded-xl">
                 Cancel
               </Button>
-              <Button type="submit" disabled={isModalSubmitting}>
-                {isModalSubmitting ? "Saving..." : "Done"}
+              <Button type="submit" disabled={isModalSubmitting} className="rounded-xl px-6">
+                {isModalSubmitting ? "Saving..." : "Save Customer"}
               </Button>
             </DialogFooter>
           </form>
         </DialogContent>
       </Dialog>
+
+      {/* CREATE VEHICLE MODAL */}
+      <Dialog open={isVehicleModalOpen} onOpenChange={setIsVehicleModalOpen}>
+        <DialogContent className="sm:max-w-[500px] rounded-3xl">
+          <form onSubmit={handleCreateVehicle}>
+            <DialogHeader className="mb-4">
+              <DialogTitle>Register New Vehicle</DialogTitle>
+            </DialogHeader>
+            <div className="grid grid-cols-2 gap-4">
+              <div className="col-span-2">
+                <FormField label="Registration Number" htmlFor="v-reg" icon={<Hash className="size-4" />}>
+                  <Input
+                    id="v-reg"
+                    required
+                    placeholder="e.g. DHK-12-3456"
+                    value={newVehicle.registrationNumber}
+                    onChange={(e) => setNewVehicle({ ...newVehicle, registrationNumber: e.target.value })}
+                    className={fieldInputClass}
+                  />
+                </FormField>
+              </div>
+              <FormField label="Make" htmlFor="v-make" icon={<Car className="size-4" />}>
+                <Input
+                  id="v-make"
+                  placeholder="e.g. Toyota"
+                  value={newVehicle.make}
+                  onChange={(e) => setNewVehicle({ ...newVehicle, make: e.target.value })}
+                  className={fieldInputClass}
+                />
+              </FormField>
+              <FormField label="Model" htmlFor="v-model" icon={<Car className="size-4" />}>
+                <Input
+                  id="v-model"
+                  placeholder="e.g. Corolla"
+                  value={newVehicle.model}
+                  onChange={(e) => setNewVehicle({ ...newVehicle, model: e.target.value })}
+                  className={fieldInputClass}
+                />
+              </FormField>
+              <FormField label="Year" htmlFor="v-year" icon={<Calendar className="size-4" />}>
+                <Input
+                  id="v-year"
+                  type="number"
+                  placeholder="2020"
+                  value={newVehicle.year}
+                  onChange={(e) => setNewVehicle({ ...newVehicle, year: e.target.value })}
+                  className={fieldInputClass}
+                />
+              </FormField>
+              <FormField label="Color" htmlFor="v-color" icon={<Palette className="size-4" />}>
+                <Input
+                  id="v-color"
+                  placeholder="e.g. Silver"
+                  value={newVehicle.color}
+                  onChange={(e) => setNewVehicle({ ...newVehicle, color: e.target.value })}
+                  className={fieldInputClass}
+                />
+              </FormField>
+              {modalError && <div className="col-span-2"><FormError message={modalError} /></div>}
+            </div>
+            <DialogFooter className="mt-6">
+              <Button type="button" variant="ghost" onClick={() => setIsVehicleModalOpen(false)} className="rounded-xl">
+                Cancel
+              </Button>
+              <Button type="submit" disabled={isModalSubmitting} className="rounded-xl px-6">
+                {isModalSubmitting ? "Saving..." : "Save Vehicle"}
+              </Button>
+            </DialogFooter>
+          </form>
+        </DialogContent>
+      </Dialog>
+
     </div>
   );
 }

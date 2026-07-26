@@ -20,6 +20,7 @@ interface FormFieldProps {
   error?: string
   hint?: string
   optional?: boolean
+  icon?: React.ReactNode
   className?: string
   children: React.ReactNode
 }
@@ -30,23 +31,27 @@ export function FormField({
   error,
   hint,
   optional,
+  icon,
   className,
   children,
 }: FormFieldProps) {
   return (
     <div className={cn("flex flex-col gap-1.5", className)}>
-      <div className="flex items-center justify-between">
+      <div className="flex items-center justify-between px-1">
         <Label
           htmlFor={htmlFor}
           className={cn(
-            "text-xs font-semibold uppercase tracking-wide text-muted-foreground",
+            "text-xs font-semibold uppercase tracking-wider text-muted-foreground flex items-center gap-1.5",
             error && "text-destructive"
           )}
         >
+          {icon}
           {label}
         </Label>
         {optional && (
-          <span className="text-xs text-muted-foreground/60 italic">Optional</span>
+          <span className="text-[10px] uppercase tracking-wider text-muted-foreground/50">
+            Optional
+          </span>
         )}
       </div>
 

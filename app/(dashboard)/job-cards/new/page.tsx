@@ -8,7 +8,6 @@ export default async function NewJobCardPage() {
 
   return (
     <div className="space-y-6">
-      <h2 className="text-xl font-semibold">New Order Card</h2>
       <NewJobCardForm employees={employees} />
     </div>
   );
