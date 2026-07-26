@@ -29,9 +29,9 @@ export default async function DashboardPage() {
   if (role === "technician") {
     const { pending, completedThisWeek, recentJobCards } = await getTechnicianDashboard();
     return (
-      <div className="space-y-6">
-        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-          <StatCard title="My Pending Tasks" value={String(pending)} />
+      <div className="space-y-8">
+        <div className="grid grid-cols-1 gap-6 sm:grid-cols-2">
+          <StatCard title="My Pending Tasks" value={String(pending)} variant="primary" progress={100} />
           <StatCard title="Completed This Week" value={String(completedThisWeek)} />
         </div>
         <RecentJobCardsPanel jobCards={recentJobCards} />
@@ -56,13 +56,13 @@ export default async function DashboardPage() {
   if (role === "manager") {
     const topVehicles = await getTopServicedVehicles();
     return (
-      <div className="space-y-6">
-        <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
-          <StatCard title="Open Job Cards" value={String(openCount)} />
-          <StatCard title="In-Progress Job Cards" value={String(inProgressCount)} />
+      <div className="space-y-8">
+        <div className="grid grid-cols-1 gap-6 sm:grid-cols-3">
+          <StatCard title="Open Job Cards" value={String(openCount)} variant="primary" progress={75} />
+          <StatCard title="In-Progress Job Cards" value={String(inProgressCount)} variant="primary" progress={45} />
           <StatCard title="Low Stock Items" value={String(lowStockCount)} />
         </div>
-        <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
+        <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
           <JobCardStatusChart data={statusBreakdown} />
           <RecentJobCardsPanel jobCards={jobCards.slice(0, 5)} />
         </div>
@@ -89,11 +89,13 @@ export default async function DashboardPage() {
         );
 
   return (
-    <div className="space-y-6">
-      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
+    <div className="space-y-8">
+      <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-4">
         <StatCard
           title="Total Revenue"
           value={`৳${thisMonthSummary.totalIncome.toFixed(2)}`}
+          variant="primary"
+          progress={trendPercent ? Math.max(0, Math.min(100, 50 + trendPercent)) : 50}
           trend={
             trendPercent === null
               ? undefined
@@ -102,16 +104,17 @@ export default async function DashboardPage() {
                   positive: trendPercent >= 0,
                 }
           }
-          sparkline={daily.map((d: { income: number }) => ({ value: d.income }))}
         />
         <StatCard
           title="Outstanding Dues"
           value={`৳${thisMonthSummary.outstandingDues.toFixed(2)}`}
+          variant="primary"
+          progress={thisMonthSummary.outstandingDues > 0 ? 80 : 0}
         />
         <StatCard title="Open Job Cards" value={String(openCount)} />
         <StatCard title="Low Stock Items" value={String(lowStockCount)} />
       </div>
-      <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
+      <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
         <JobCardStatusChart data={statusBreakdown} />
         <RecentJobCardsPanel jobCards={jobCards.slice(0, 5)} />
       </div>

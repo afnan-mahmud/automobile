@@ -255,12 +255,17 @@ export function NewJobCardForm({ employees }: { employees: Employee[] }) {
                 ) : (
                   <Select value={vehicleId} onValueChange={(v) => setVehicleId(v ?? "")}>
                     <SelectTrigger className="w-full">
-                      <SelectValue placeholder="Select a vehicle" />
+                      <SelectValue placeholder="Select a vehicle">
+                        {vehicles.find(v => v._id === vehicleId)
+                          ? `${vehicles.find(v => v._id === vehicleId)!.registrationNumber} ${vehicles.find(v => v._id === vehicleId)!.make ? `— ${vehicles.find(v => v._id === vehicleId)!.make} ${vehicles.find(v => v._id === vehicleId)!.model ?? ""}` : ""}`.trim()
+                          : "Select a vehicle"
+                        }
+                      </SelectValue>
                     </SelectTrigger>
                     <SelectContent>
                       {vehicles.map((v) => (
                         <SelectItem key={v._id} value={v._id}>
-                          {v.registrationNumber} {v.make ? `— ${v.make} ${v.model ?? ""}` : ""}
+                          {`${v.registrationNumber} ${v.make ? `— ${v.make} ${v.model ?? ""}` : ""}`.trim()}
                         </SelectItem>
                       ))}
                     </SelectContent>
@@ -315,7 +320,9 @@ export function NewJobCardForm({ employees }: { employees: Employee[] }) {
                       onValueChange={(v) => updateTask(index, { assignedTo: v ?? "" })}
                     >
                       <SelectTrigger className="w-full">
-                        <SelectValue placeholder="Technician" />
+                        <SelectValue placeholder="Technician">
+                          {employees.find(emp => emp._id === task.assignedTo)?.name || "Technician"}
+                        </SelectValue>
                       </SelectTrigger>
                       <SelectContent>
                         {employees.map((emp) => (

@@ -14,14 +14,14 @@ export default async function DashboardLayout({
 
   return (
     <div className="flex min-h-screen bg-background">
-      <aside className="hidden w-60 shrink-0 flex-col border-r border-sidebar-border bg-sidebar md:flex">
-        <div className="border-b border-sidebar-border px-4 py-4">
-          <span className="font-semibold text-sidebar-foreground">Dhaka Automobiles</span>
+      <aside className="hidden w-64 shrink-0 flex-col bg-sidebar md:flex shadow-sm z-10">
+        <div className="px-6 py-8">
+          <span className="text-xl font-bold text-sidebar-foreground">Dhaka Automobiles</span>
         </div>
-        <div className="flex-1 overflow-y-auto">
+        <div className="flex-1 overflow-y-auto px-4">
           <DashboardNav role={role} />
         </div>
-        <div className="flex items-center justify-between gap-2 border-t border-sidebar-border p-4">
+        <div className="flex items-center justify-between gap-2 p-6 mt-auto">
           <div className="min-w-0">
             <p className="truncate text-sm font-medium text-sidebar-foreground">
               {session?.user?.name}
