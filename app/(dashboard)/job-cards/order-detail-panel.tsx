@@ -98,7 +98,7 @@ export function OrderDetailPanel({
   /* fetch whenever id changes */
   useEffect(() => {
     if (!jobCardId) {
-      setData(null);
+      // Do not clear data here so the panel can animate out with the previous data
       return;
     }
     setLoading(true);
@@ -120,19 +120,25 @@ export function OrderDetailPanel({
 
   const open = Boolean(jobCardId);
 
-  if (!open) return null;
-
   const s = data ? STATUS_STYLE[data.status] : null;
   const taskDone = data ? data.tasks.filter((t) => t.status === "completed").length : 0;
   const taskTotal = data ? data.tasks.length : 0;
   const progress = taskTotal > 0 ? Math.round((taskDone / taskTotal) * 100) : 0;
 
   return (
-    <>
+    <div
+      className={cn(
+        "fixed inset-0 z-50",
+        open ? "pointer-events-auto" : "pointer-events-none"
+      )}
+    >
       {/* Backdrop */}
       <div
-        className="fixed inset-0 z-40 bg-black/20 backdrop-blur-[2px] transition-opacity duration-300"
-        onClick={onClose}
+        className={cn(
+          "absolute inset-0 bg-black/20 backdrop-blur-[2px] transition-opacity duration-300",
+          open ? "opacity-100" : "opacity-0"
+        )}
+        onClick={open ? onClose : undefined}
       />
 
       {/* Slide-in panel */}
@@ -395,6 +401,6 @@ export function OrderDetailPanel({
           </div>
         )}
       </div>
-    </>
+    </div>
   );
 }
