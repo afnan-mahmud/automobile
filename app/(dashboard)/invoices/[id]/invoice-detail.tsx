@@ -120,7 +120,7 @@ export function InvoiceDetail({ invoice }: { invoice: Invoice }) {
                 </p>
               </div>
               <h1 className="text-3xl font-bold tracking-tight text-foreground">
-                INV-{invoice.invoiceNumber}
+                {invoice.invoiceNumber}
               </h1>
             </div>
             
