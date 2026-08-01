@@ -1,5 +1,5 @@
 import "dotenv/config";
-import { mongoose } from "mongoose";
+import mongoose from "mongoose";
 import { connectToDatabase } from "../lib/db";
 import { Employee } from "../models/Employee";
 
