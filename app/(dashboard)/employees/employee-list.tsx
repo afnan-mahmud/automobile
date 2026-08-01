@@ -11,6 +11,7 @@ type EmployeeRow = {
   name: string;
   phone: string;
   designation?: string;
+  departments?: string[];
   hourlyRate: number;
   active: boolean;
 };
@@ -98,11 +99,27 @@ export function EmployeeList({ initialEmployees }: { initialEmployees: EmployeeR
             </div>
 
             {/* Name & designation */}
-            <div className="px-5 pb-1 text-center">
-              <p className="font-semibold leading-snug">{emp.name}</p>
-              <p className="mt-0.5 text-xs text-muted-foreground">
-                {emp.designation || "No designation"}
-              </p>
+            <div className="px-5 pb-1 text-center flex flex-col items-center">
+              <p className="font-semibold text-foreground truncate">{emp.name}</p>
+              <div className="flex items-center gap-2 mt-0.5">
+                {emp.designation && (
+                  <span className="text-xs text-muted-foreground truncate max-w-[120px]">
+                    {emp.designation}
+                  </span>
+                )}
+                {emp.departments && emp.departments.length > 0 && (
+                  <>
+                    {emp.designation && <span className="text-muted-foreground/40 text-[10px]">·</span>}
+                    <div className="flex gap-1 flex-wrap justify-center mt-1">
+                      {emp.departments.map((dept) => (
+                        <span key={dept} className="text-[10px] font-medium text-primary/80 bg-primary/10 px-1.5 py-0.5 rounded-full truncate max-w-[120px]">
+                          {dept}
+                        </span>
+                      ))}
+                    </div>
+                  </>
+                )}
+              </div>
             </div>
 
             {/* Stats row */}

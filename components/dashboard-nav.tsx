@@ -15,6 +15,7 @@ import {
   MessageSquare,
   ShieldCheck,
   Tag,
+  BookOpen,
   type LucideIcon,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
@@ -33,6 +34,7 @@ const navItems: { href: string; label: string; icon: LucideIcon; roles: Role[] }
   { href: "/messages", label: "Messages", icon: MessageSquare, roles: ["admin", "manager"] },
   { href: "/warranty-cards", label: "Warranty Cards", icon: ShieldCheck, roles: ["admin", "manager"] },
   { href: "/discount-cards", label: "Discount Cards", icon: Tag, roles: ["admin", "manager"] },
+  { href: "/services", label: "Service List", icon: BookOpen, roles: ["admin", "manager"] },
 ];
 
 export function DashboardNav({ role }: { role: Role }) {

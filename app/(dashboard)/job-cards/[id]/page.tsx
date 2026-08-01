@@ -5,6 +5,7 @@ import { getJobCardById } from "@/actions/jobCards";
 import { listActiveEmployees } from "@/actions/employees";
 import { listProducts } from "@/actions/stock";
 import { getWarrantyCardByJobCard } from "@/actions/warranty";
+import { listServices } from "@/actions/services";
 import { JobCardDetail } from "./job-card-detail";
 
 export default async function JobCardDetailPage({
@@ -21,10 +22,11 @@ export default async function JobCardDetailPage({
   }
 
   const isStaffManager = session.user.role !== "technician";
-  const [employees, products, warrantyCard] = await Promise.all([
+  const [employees, products, warrantyCard, services] = await Promise.all([
     isStaffManager ? listActiveEmployees() : Promise.resolve([]),
     isStaffManager ? listProducts() : Promise.resolve([]),
     isStaffManager ? getWarrantyCardByJobCard(id) : Promise.resolve(null),
+    isStaffManager ? listServices() : Promise.resolve([]),
   ]);
 
   return (
@@ -40,6 +42,7 @@ export default async function JobCardDetailPage({
         employees={employees}
         products={products}
         warrantyCard={warrantyCard}
+        services={services}
       />
     </div>
   );

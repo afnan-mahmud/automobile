@@ -4,10 +4,12 @@ import { JOB_CARD_STATUSES, TASK_STATUSES, PHOTO_TYPES } from "@/types/jobCard";
 export { JOB_CARD_STATUSES, TASK_STATUSES, PHOTO_TYPES };
 export type { JobCardStatus, TaskStatus, PhotoType } from "@/types/jobCard";
 
-const taskSchema = new Schema(
-  {
-    description: { type: String, required: true, trim: true },
+const taskSchema = new Schema({
+
+    serviceId: { type: Schema.Types.ObjectId, ref: "Service" },
+    description: { type: String, trim: true },
     assignedTo: { type: Schema.Types.ObjectId, ref: "Employee", required: true },
+    priority: { type: Number, default: 1 },
     status: { type: String, enum: TASK_STATUSES, default: "pending" },
     assignedDate: { type: Date, required: true },
     completedDate: { type: Date, default: null },

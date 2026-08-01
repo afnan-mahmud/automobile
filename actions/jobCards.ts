@@ -18,12 +18,15 @@ import { StockTransaction } from "@/models/StockTransaction";
 import { carryForwardOverdueTasks } from "@/lib/taskCarryForward";
 import "@/models/Employee";
 import "@/models/Customer";
+import "@/models/Service";
 import type { ActionResult } from "@/actions/customers";
 
 const taskInputSchema = z.object({
-  description: z.string().min(1, "Task description is required"),
+  serviceId: z.string().min(1, "Service is required"),
+  description: z.string().optional(),
   assignedTo: z.string().min(1, "Assignee is required"),
   assignedDate: z.coerce.date(),
+  priority: z.coerce.number().min(1).default(1),
 });
 
 const createJobCardSchema = z.object({
@@ -97,9 +100,11 @@ export async function updateJobCardStatus(
 
 const addTaskSchema = z.object({
   jobCardId: z.string().min(1),
-  description: z.string().min(1, "Task description is required"),
+  serviceId: z.string().min(1, "Service is required"),
+  description: z.string().optional(),
   assignedTo: z.string().min(1, "Assignee is required"),
   assignedDate: z.coerce.date(),
+  priority: z.coerce.number().min(1).default(1),
 });
 
 export async function addTask(
@@ -281,6 +286,7 @@ export async function getJobCardById(id: string) {
     .populate("vehicleId", "registrationNumber make model year color")
     .populate("customerId", "name phone")
     .populate("tasks.assignedTo", "name")
+    .populate("tasks.serviceId", "name department")
     .populate("partsUsed.productId", "name sku")
     .lean();
 

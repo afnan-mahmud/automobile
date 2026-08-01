@@ -3,8 +3,8 @@
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { getSalaryRecord } from "@/actions/salary";
+import { Search, Info } from "lucide-react";
 
 type SalaryRecord = {
   totalHoursWorked: number;
@@ -21,60 +21,73 @@ export function SalaryHistory({ employeeId }: { employeeId: string }) {
   const [year, setYear] = useState(now.getFullYear());
   const [record, setRecord] = useState<SalaryRecord | null>(null);
   const [searched, setSearched] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
 
   async function handleLookup() {
+    setIsLoading(true);
     const result = await getSalaryRecord(employeeId, month, year);
     setRecord(result as SalaryRecord | null);
     setSearched(true);
+    setIsLoading(false);
   }
 
   return (
-    <Card>
-      <CardHeader>
-        <CardTitle>Salary History</CardTitle>
-      </CardHeader>
-      <CardContent className="space-y-4">
-        <div className="flex items-end gap-2">
-          <div className="space-y-1">
-            <label className="text-xs text-muted-foreground">Month</label>
+    <div className="p-5 flex flex-col space-y-5">
+      <div className="flex flex-col gap-3">
+        <div className="flex items-end gap-3">
+          <div className="space-y-1.5 flex-1">
+            <label className="text-xs font-medium text-muted-foreground uppercase tracking-wider">Month</label>
             <Input
               type="number"
               min={1}
               max={12}
               value={month}
               onChange={(e) => setMonth(Number(e.target.value))}
-              className="w-20"
+              className="rounded-xl h-11"
             />
           </div>
-          <div className="space-y-1">
-            <label className="text-xs text-muted-foreground">Year</label>
+          <div className="space-y-1.5 flex-1">
+            <label className="text-xs font-medium text-muted-foreground uppercase tracking-wider">Year</label>
             <Input
               type="number"
               value={year}
               onChange={(e) => setYear(Number(e.target.value))}
-              className="w-24"
+              className="rounded-xl h-11"
             />
           </div>
-          <Button size="sm" onClick={handleLookup}>
-            View
-          </Button>
         </div>
+        <Button onClick={handleLookup} disabled={isLoading} className="w-full rounded-xl h-11">
+          {isLoading ? "Searching..." : <><Search className="mr-2 size-4" /> View Salary Record</>}
+        </Button>
+      </div>
 
-        {searched && !record && (
-          <p className="text-sm text-muted-foreground">
-            No salary record generated for this month yet.
-          </p>
-        )}
-        {record && (
-          <div className="space-y-1 text-sm">
-            <p>Hours worked: {record.totalHoursWorked.toFixed(1)}</p>
-            <p>Required hours: {record.requiredHours.toFixed(1)}</p>
-            <p>Deduction: ৳{record.deduction.toFixed(2)}</p>
-            <p>Overtime: ৳{record.overtimeAmount.toFixed(2)}</p>
-            <p className="font-semibold">Net Salary: ৳{record.netSalary.toFixed(2)}</p>
+      {searched && !record && (
+        <div className="rounded-xl border border-dashed p-6 text-center">
+          <Info className="mx-auto mb-2 size-6 text-muted-foreground/50" />
+          <p className="text-sm font-medium">No record generated for {month}/{year}</p>
+        </div>
+      )}
+      
+      {record && (
+        <div className="rounded-xl bg-muted/40 p-4 border space-y-3">
+          <div className="flex justify-between items-center text-sm border-b pb-2">
+            <span className="text-muted-foreground">Hours Worked</span>
+            <span className="font-medium">{record.totalHoursWorked.toFixed(1)} / {record.requiredHours.toFixed(1)}</span>
           </div>
-        )}
-      </CardContent>
-    </Card>
+          <div className="flex justify-between items-center text-sm border-b pb-2">
+            <span className="text-muted-foreground">Deduction</span>
+            <span className="font-medium text-pink-600 dark:text-pink-400">-৳{record.deduction.toFixed(2)}</span>
+          </div>
+          <div className="flex justify-between items-center text-sm border-b pb-2">
+            <span className="text-muted-foreground">Overtime</span>
+            <span className="font-medium text-emerald-600 dark:text-emerald-400">+৳{record.overtimeAmount.toFixed(2)}</span>
+          </div>
+          <div className="flex justify-between items-center pt-1">
+            <span className="font-semibold text-foreground">Net Salary</span>
+            <span className="font-bold text-lg text-primary">৳{record.netSalary.toFixed(2)}</span>
+          </div>
+        </div>
+      )}
+    </div>
   );
 }

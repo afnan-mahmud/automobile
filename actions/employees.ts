@@ -11,6 +11,7 @@ import { User } from "@/models/User";
 import { AttendanceRecord, ATTENDANCE_STATUSES } from "@/models/AttendanceRecord";
 import { JobCard } from "@/models/JobCard";
 import type { ActionResult } from "@/actions/customers";
+import { DEPARTMENTS } from "@/types/department";
 
 function isDuplicateKeyError(err: unknown): boolean {
   return (
@@ -45,7 +46,7 @@ export async function listActiveEmployees() {
 
   const employees = await Employee.find({ active: true })
     .sort({ name: 1 })
-    .select("name designation")
+    .select("name designation departments")
     .lean();
 
   return serialize(employees);
@@ -62,7 +63,9 @@ export async function listEmployees() {
 const employeeInputSchema = z.object({
   name: z.string().min(1, "Name is required"),
   phone: z.string().min(1, "Phone is required"),
+  email: z.string().email("Invalid email address").optional().or(z.literal("")),
   designation: z.string().optional(),
+  departments: z.array(z.enum(DEPARTMENTS as unknown as [string, ...string[]])).optional(),
   hourlyRate: z.coerce.number().positive("Hourly rate must be positive"),
   requiredHoursPerDay: z.coerce.number().positive().default(8),
   joinDate: z.coerce.date().optional(),

@@ -28,7 +28,8 @@ import {
 import { cn } from "@/lib/utils";
 import { Badge } from "@/components/ui/badge";
 
-type Employee = { _id: string; name: string; designation?: string };
+type Employee = { _id: string; name: string; designation?: string; departments?: string[] };
+type Service = { _id: string; name: string; department: string; expectedCosting: number };
 type CustomerRow = { _id: string; name: string; phone: string };
 type VehicleRow = {
   _id: string;
@@ -37,11 +38,11 @@ type VehicleRow = {
   model?: string;
 };
 
-type TaskRow = { description: string; assignedTo: string; assignedDate: string };
+type TaskRow = { serviceId: string; description: string; assignedTo: string; assignedDate: string; priority: number };
 
 const today = () => new Date().toISOString().slice(0, 10);
 
-export function NewJobCardForm({ employees }: { employees: Employee[] }) {
+export function NewJobCardForm({ employees, services }: { employees: Employee[], services: Service[] }) {
   const router = useRouter();
   const [customerQuery, setCustomerQuery] = useState("");
   const [customers, setCustomers] = useState<CustomerRow[]>([]);
@@ -49,7 +50,7 @@ export function NewJobCardForm({ employees }: { employees: Employee[] }) {
   const [vehicles, setVehicles] = useState<VehicleRow[]>([]);
   const [vehicleId, setVehicleId] = useState<string>("");
   const [tasks, setTasks] = useState<TaskRow[]>([
-    { description: "", assignedTo: "", assignedDate: today() },
+    { serviceId: "", description: "", assignedTo: "", assignedDate: today(), priority: 1 },
   ]);
   const [error, setError] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -91,7 +92,7 @@ export function NewJobCardForm({ employees }: { employees: Employee[] }) {
   function addTaskRow() {
     setTasks((prev) => [
       ...prev,
-      { description: "", assignedTo: "", assignedDate: today() },
+      { serviceId: "", description: "", assignedTo: "", assignedDate: today(), priority: prev.length + 1 },
     ]);
   }
 
@@ -106,11 +107,13 @@ export function NewJobCardForm({ employees }: { employees: Employee[] }) {
       return;
     }
     const cleanTasks = tasks
-      .filter((t) => t.description.trim() && t.assignedTo)
+      .filter((t) => t.serviceId && t.assignedTo)
       .map((t) => ({
+        serviceId: t.serviceId,
         description: t.description,
         assignedTo: t.assignedTo,
         assignedDate: new Date(t.assignedDate),
+        priority: t.priority,
       }));
     setIsSubmitting(true);
     const result = await createJobCard({ vehicleId, tasks: cleanTasks });
@@ -372,55 +375,100 @@ export function NewJobCardForm({ employees }: { employees: Employee[] }) {
           </div>
 
           <div className="space-y-3">
-            {tasks.map((task, index) => (
-              <div key={index} className="group relative flex flex-col sm:flex-row sm:items-center gap-3 rounded-2xl border bg-muted/20 p-3 transition-all hover:bg-muted/40 focus-within:bg-muted/40 focus-within:border-primary/30">
-                <div className="flex-1 min-w-0">
-                  <Input
-                    placeholder="Task description (e.g., Oil change, Brake inspection)..."
-                    value={task.description}
-                    onChange={(e) => updateTask(index, { description: e.target.value })}
-                    className="h-10 border-0 bg-transparent px-2 text-base font-medium shadow-none focus-visible:ring-0 placeholder:font-normal"
-                  />
-                </div>
-                
-                <div className="flex items-center gap-2 sm:pl-3 sm:border-l sm:border-border/50 shrink-0">
-                  <Select
-                    value={task.assignedTo}
-                    onValueChange={(v) => updateTask(index, { assignedTo: v ?? "" })}
-                  >
-                    <SelectTrigger className="w-[140px] h-9 rounded-xl border-transparent bg-muted/50 hover:bg-muted focus:ring-0">
-                      <SelectValue placeholder="Assign To" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {employees.map((emp) => (
-                        <SelectItem key={emp._id} value={emp._id}>
-                          {emp.name}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
+            {tasks.map((task, index) => {
+              const selectedService = services.find((s) => s._id === task.serviceId);
+              const assignableEmployees = selectedService
+                ? employees.filter((emp) => emp.departments?.includes(selectedService.department))
+                : employees;
 
-                  <Input
-                    type="date"
-                    value={task.assignedDate}
-                    onChange={(e) => updateTask(index, { assignedDate: e.target.value })}
-                    className="w-[140px] h-9 rounded-xl border-transparent bg-muted/50 hover:bg-muted focus-visible:ring-0 text-sm"
-                  />
+              return (
+                <div key={index} className="group relative flex flex-col gap-3 rounded-2xl border bg-muted/20 p-4 transition-all hover:bg-muted/40 focus-within:bg-muted/40 focus-within:border-primary/30">
+                  <div className="flex flex-col sm:flex-row sm:items-start gap-3">
+                    <div className="shrink-0 w-16">
+                      <Input
+                        type="number"
+                        min="1"
+                        placeholder="Priority"
+                        value={task.priority}
+                        onChange={(e) => updateTask(index, { priority: parseInt(e.target.value) || 1 })}
+                        className="h-10 rounded-xl bg-transparent border-border/50 text-center shadow-none focus-visible:ring-1"
+                        title="Priority / Step"
+                      />
+                    </div>
+                    <div className="flex-1 min-w-0 flex flex-col gap-2">
+                      <Select
+                        value={task.serviceId}
+                        onValueChange={(v) => updateTask(index, { serviceId: v ?? "", assignedTo: "" })}
+                      >
+                        <SelectTrigger className="h-10 rounded-xl bg-background border-border/50 shadow-none">
+                          <SelectValue placeholder="Select Service">
+                            {(value: string) => services.find((s) => s._id === value)?.name || "Select Service"}
+                          </SelectValue>
+                        </SelectTrigger>
+                        <SelectContent>
+                          {services.map((srv) => (
+                            <SelectItem key={srv._id} value={srv._id}>
+                              {srv.name} <span className="text-muted-foreground ml-1">({srv.department})</span>
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                      <Input
+                        placeholder="Optional custom notes (e.g. Bring own oil)..."
+                        value={task.description}
+                        onChange={(e) => updateTask(index, { description: e.target.value })}
+                        className="h-9 border-0 bg-transparent px-2 text-sm shadow-none focus-visible:ring-0 placeholder:italic"
+                      />
+                    </div>
+                    
+                    <div className="flex items-center gap-2 sm:pl-3 sm:border-l sm:border-border/50 shrink-0 self-start">
+                      <Select
+                        value={task.assignedTo}
+                        onValueChange={(v) => updateTask(index, { assignedTo: v ?? "" })}
+                        disabled={!task.serviceId}
+                      >
+                        <SelectTrigger className="w-[150px] h-10 rounded-xl border-transparent bg-muted/50 hover:bg-muted focus:ring-0">
+                          <SelectValue placeholder="Assign To">
+                            {(value: string) => employees.find((e) => e._id === value)?.name || "Assign To"}
+                          </SelectValue>
+                        </SelectTrigger>
+                        <SelectContent>
+                          {assignableEmployees.map((emp) => (
+                            <SelectItem key={emp._id} value={emp._id}>
+                              {emp.name}
+                            </SelectItem>
+                          ))}
+                          {assignableEmployees.length === 0 && (
+                            <div className="px-2 py-4 text-xs text-muted-foreground text-center">
+                              No employees in {selectedService?.department}
+                            </div>
+                          )}
+                        </SelectContent>
+                      </Select>
 
-                  {tasks.length > 1 && (
-                    <Button
-                      variant="ghost"
-                      size="icon"
-                      className="size-9 rounded-xl text-muted-foreground hover:bg-destructive/10 hover:text-destructive shrink-0"
-                      onClick={() => removeTaskRow(index)}
-                      title="Remove task"
-                    >
-                      <X className="size-4" />
-                    </Button>
-                  )}
+                      <Input
+                        type="date"
+                        value={task.assignedDate}
+                        onChange={(e) => updateTask(index, { assignedDate: e.target.value })}
+                        className="w-[140px] h-10 rounded-xl border-transparent bg-muted/50 hover:bg-muted focus-visible:ring-0 text-sm"
+                      />
+
+                      {tasks.length > 1 && (
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          className="size-10 rounded-xl text-muted-foreground hover:bg-destructive/10 hover:text-destructive shrink-0"
+                          onClick={() => removeTaskRow(index)}
+                          title="Remove task"
+                        >
+                          <X className="size-4" />
+                        </Button>
+                      )}
+                    </div>
+                  </div>
                 </div>
-              </div>
-            ))}
+              );
+            })}
           </div>
         </div>
 

@@ -41,6 +41,8 @@ import {
 
 type Task = {
   _id: string;
+  serviceId?: { _id: string; name: string; department: string };
+  priority?: number;
   description: string;
   status: TaskStatus;
   assignedTo: { _id: string; name: string } | null;
@@ -103,12 +105,14 @@ export function JobCardDetail({
   employees,
   products,
   warrantyCard,
+  services,
 }: {
   jobCard: JobCard;
   session: { role: string; employeeId: string | null };
-  employees: { _id: string; name: string }[];
+  employees: { _id: string; name: string; departments?: string[] }[];
   products: { _id: string; name: string; sku: string }[];
   warrantyCard: { _id: string; cardNumber: string } | null;
+  services: { _id: string; name: string; department: string; expectedCosting: number }[];
 }) {
   const router = useRouter();
   const isStaffManager = session.role === "admin" || session.role === "manager";
@@ -232,6 +236,9 @@ export function JobCardDetail({
   const taskDone = jobCard.tasks.filter((t) => t.status === "completed").length;
   const taskTotal = jobCard.tasks.length;
   const progress = taskTotal > 0 ? Math.round((taskDone / taskTotal) * 100) : 0;
+  const sortedTasks = [...jobCard.tasks].sort((a, b) => {
+    return (a.priority || 999) - (b.priority || 999);
+  });
 
   return (
     <div className="grid grid-cols-1 items-start gap-6 lg:grid-cols-[1fr_360px]">
@@ -312,7 +319,11 @@ export function JobCardDetail({
           <div className="mb-4 flex items-center justify-between">
             <h3 className="text-lg font-semibold tracking-tight">Tasks Activity</h3>
             {isStaffManager && (
-              <AssignTaskDialog jobCardId={jobCard._id} employees={employees} />
+              <AssignTaskDialog
+                jobCardId={jobCard._id}
+                employees={employees}
+                services={services}
+              />
             )}
           </div>
           
@@ -325,26 +336,39 @@ export function JobCardDetail({
               </div>
             )}
             
-            {jobCard.tasks.map((task) => (
-              <div key={task._id} className="group relative flex items-center justify-between gap-4 rounded-xl border bg-muted/20 p-4 transition-all hover:bg-muted/40">
-                <div className="flex items-center gap-4 min-w-0 flex-1">
+            {sortedTasks.map((task) => (
+              <div key={task._id} className="group relative flex flex-col sm:flex-row sm:items-center gap-3 rounded-2xl border bg-card p-4 transition-all hover:bg-muted/30 hover:shadow-sm">
+                
+                {/* Task Icon/Status Indicator & Info */}
+                <div className="flex flex-1 items-start gap-4 min-w-0">
                   <div className={cn(
-                    "flex size-10 shrink-0 items-center justify-center rounded-full text-white shadow-sm",
-                    task.status === 'completed' ? "bg-emerald-500" : task.status === 'in_progress' ? "bg-amber-500" : "bg-slate-400"
+                    "flex size-10 shrink-0 items-center justify-center rounded-xl",
+                    task.status === "completed" ? "bg-success/10 text-success"
+                      : task.status === "in_progress" ? "bg-primary/10 text-primary"
+                      : "bg-muted text-muted-foreground"
                   )}>
-                    {task.status === 'completed' ? <CheckCircle2 className="size-5" /> : task.status === 'in_progress' ? <Wrench className="size-5" /> : <Clock className="size-5" />}
+                    {task.status === "completed" ? <CheckCircle2 className="size-5" /> : 
+                     task.status === "in_progress" ? <Play className="size-5" /> :
+                     <span className="font-bold text-sm">{task.priority || "-"}</span>}
                   </div>
-                  <div className="min-w-0 flex-1">
-                    <p className="truncate font-semibold text-card-foreground">{task.description}</p>
-                    <div className="mt-1 flex flex-wrap items-center gap-2 text-xs text-muted-foreground">
-                      <span className="font-medium text-foreground/80">{task.assignedTo?.name ?? "Unassigned"}</span>
-                      <span>•</span>
-                      <span>{new Date(task.assignedDate).toLocaleDateString()}</span>
-                      {task.carriedForwardFromDate && (
-                        <>
-                          <span>•</span>
-                          <span className="text-rose-500 font-medium">Carried Over</span>
-                        </>
+                  <div className="flex flex-col min-w-0 flex-1">
+                    <p className={cn(
+                      "font-semibold text-foreground text-base leading-tight truncate",
+                      task.status === "completed" && "text-muted-foreground line-through"
+                    )}>
+                      {task.serviceId ? task.serviceId.name : task.description}
+                    </p>
+                    
+                    <div className="flex flex-wrap items-center gap-x-2 gap-y-1 mt-1.5">
+                      {task.serviceId && (
+                        <Badge variant="outline" className="text-[10px] uppercase font-semibold text-muted-foreground px-1.5 h-5 rounded-md border-border/50">
+                          {task.serviceId.department}
+                        </Badge>
+                      )}
+                      {task.description && task.serviceId && (
+                        <span className="text-sm text-muted-foreground italic truncate max-w-[200px]">
+                          {task.description}
+                        </span>
                       )}
                     </div>
                   </div>
@@ -569,7 +593,9 @@ export function JobCardDetail({
               <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Add Material</p>
               <Select value={partProductId} onValueChange={(v) => setPartProductId(v ?? "")}>
                 <SelectTrigger className="w-full rounded-xl bg-background">
-                  <SelectValue placeholder="Select product" />
+                  <SelectValue placeholder="Select product">
+                    {(value: string) => products.find((p) => p._id === value)?.name || "Select product"}
+                  </SelectValue>
                 </SelectTrigger>
                 <SelectContent>
                   {products.map((p) => (

@@ -20,7 +20,8 @@ import {
 } from "@/components/ui/select";
 import { createEmployee } from "@/actions/employees";
 import { FormField, FormError, fieldInputClass, fieldSelectClass } from "@/components/ui/form-field";
-import { User, Phone, Briefcase, Clock, DollarSign, Lock, Mail, Shield } from "lucide-react";
+import { User, Phone, Briefcase, Clock, DollarSign, Lock, Mail, Shield, Hash } from "lucide-react";
+import { DEPARTMENTS } from "@/types/department";
 
 export function AddEmployeeDialog() {
   const router = useRouter();
@@ -28,6 +29,7 @@ export function AddEmployeeDialog() {
   const [name, setName] = useState("");
   const [phone, setPhone] = useState("");
   const [designation, setDesignation] = useState("");
+  const [departments, setDepartments] = useState<string[]>([]);
   const [hourlyRate, setHourlyRate] = useState("");
   const [requiredHoursPerDay, setRequiredHoursPerDay] = useState("8");
   const [createLogin, setCreateLogin] = useState(false);
@@ -48,6 +50,7 @@ export function AddEmployeeDialog() {
       name,
       phone,
       designation: designation || undefined,
+      departments: departments.length > 0 ? (departments as any) : undefined,
       hourlyRate: Number(hourlyRate),
       requiredHoursPerDay: Number(requiredHoursPerDay) || 8,
       createLogin,
@@ -104,16 +107,46 @@ export function AddEmployeeDialog() {
             </div>
           </FormField>
 
-          <FormField label="Designation" htmlFor="emp-designation" optional>
+          <FormField label="Designation" htmlFor="emp-desig" optional>
             <div className="flex items-center gap-2 px-3">
               <Briefcase className="size-4 shrink-0 text-muted-foreground" />
               <Input
-                id="emp-designation"
+                id="emp-desig"
                 placeholder="e.g. Senior Technician"
                 className={fieldInputClass}
                 value={designation}
                 onChange={(e) => setDesignation(e.target.value)}
               />
+            </div>
+          </FormField>
+
+          <FormField label="Departments" htmlFor="emp-dept" optional>
+            <div className="flex flex-wrap gap-2 pt-1 px-1">
+              {DEPARTMENTS.map((dept) => {
+                const isSelected = departments.includes(dept);
+                return (
+                  <label
+                    key={dept}
+                    className={`flex items-center gap-2 px-3 py-1.5 rounded-full border text-xs font-medium cursor-pointer transition-colors ${
+                      isSelected ? "bg-primary/10 border-primary/30 text-primary" : "bg-background hover:bg-muted/50"
+                    }`}
+                  >
+                    <input
+                      type="checkbox"
+                      className="sr-only"
+                      checked={isSelected}
+                      onChange={(e) => {
+                        if (e.target.checked) {
+                          setDepartments([...departments, dept]);
+                        } else {
+                          setDepartments(departments.filter((d) => d !== dept));
+                        }
+                      }}
+                    />
+                    {dept}
+                  </label>
+                );
+              })}
             </div>
           </FormField>
 
