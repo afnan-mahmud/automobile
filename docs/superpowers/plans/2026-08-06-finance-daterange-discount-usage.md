@@ -80,7 +80,7 @@ Pure, dependency-free day math in a fixed timezone. Everything later in the plan
   - `formatRangeLabel(range: DateRange): string`
   - `RANGE_PRESETS: { value: RangePreset; label: string }[]`
 
-- [ ] **Step 1: Write the failing test**
+- [x] **Step 1: Write the failing test**
 
 Create `tests/unit/date-range.test.ts`:
 
@@ -240,12 +240,12 @@ describe("formatRangeLabel", () => {
 });
 ```
 
-- [ ] **Step 2: Run the test to verify it fails**
+- [x] **Step 2: Run the test to verify it fails**
 
 Run: `npx vitest run tests/unit/date-range.test.ts`
 Expected: FAIL — `Failed to resolve import "@/lib/dateRange"`.
 
-- [ ] **Step 3: Write the implementation**
+- [x] **Step 3: Write the implementation**
 
 Create `lib/dateRange.ts`:
 
@@ -386,12 +386,12 @@ export function formatRangeLabel(range: DateRange): string {
 }
 ```
 
-- [ ] **Step 4: Run the test to verify it passes**
+- [x] **Step 4: Run the test to verify it passes**
 
 Run: `npx vitest run tests/unit/date-range.test.ts`
 Expected: PASS — all tests green.
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ```bash
 git add lib/dateRange.ts tests/unit/date-range.test.ts
@@ -417,7 +417,7 @@ Fix the exclusive end-date bug and make the daily series cover the whole range w
 
 Both action signatures change from loose optional strings to a single `DateRange`, so callers cannot accidentally pass a half-range.
 
-- [ ] **Step 1: Write the failing test**
+- [x] **Step 1: Write the failing test**
 
 Create `tests/integration/finance-date-range.test.ts`:
 
@@ -532,12 +532,12 @@ describe("finance dashboard date range", () => {
 });
 ```
 
-- [ ] **Step 2: Run the test to verify it fails**
+- [x] **Step 2: Run the test to verify it fails**
 
 Run: `npx vitest run tests/integration/finance-date-range.test.ts`
 Expected: FAIL — `getFinanceDashboardSummary` currently takes `(from?, to?)` strings, so passing a `DateRange` object filters nothing and the "excludes transactions just outside either bound" test reports `1937` instead of `50`.
 
-- [ ] **Step 3: Update the aggregations**
+- [x] **Step 3: Update the aggregations**
 
 In `actions/accounts.ts`, add the import near the other `@/lib` imports:
 
@@ -661,12 +661,12 @@ export async function getDailyIncomeExpense(range: DateRange) {
 }
 ```
 
-- [ ] **Step 4: Run the test to verify it passes**
+- [x] **Step 4: Run the test to verify it passes**
 
 Run: `npx vitest run tests/integration/finance-date-range.test.ts`
 Expected: PASS.
 
-- [ ] **Step 5: Fix every existing caller**
+- [x] **Step 5: Fix every existing caller**
 
 Four files call the old signatures. All of them must be updated or the build breaks.
 
@@ -734,7 +734,7 @@ adding `import { resolvePreset } from "@/lib/dateRange";` at the top. Task 4
 replaces this with the real `searchParams` wiring; this step only keeps the build
 green.
 
-- [ ] **Step 6: Run the whole suite and the type check**
+- [x] **Step 6: Run the whole suite and the type check**
 
 Run: `npm test`
 Expected: PASS — no regressions in `invoice-delete` or `dashboard-aggregations`.
@@ -742,7 +742,7 @@ Expected: PASS — no regressions in `invoice-delete` or `dashboard-aggregations
 Run: `npx tsc --noEmit`
 Expected: no errors.
 
-- [ ] **Step 7: Commit**
+- [x] **Step 7: Commit**
 
 ```bash
 git add actions/accounts.ts tests/integration/finance-date-range.test.ts tests/integration/invoice-delete.test.ts tests/integration/role-enforcement.test.ts "app/(dashboard)/dashboard/page.tsx" "app/(dashboard)/accounts/dashboard/page.tsx"
@@ -766,12 +766,12 @@ git commit -m "fix(accounts): make date range end inclusive and zero-fill daily 
   - `type CalendarRange = { from?: Date; to?: Date }` from `@/components/ui/calendar`
   - `Calendar` from `@/components/ui/calendar`, props: `{ selected?: CalendarRange; onSelect: (range: CalendarRange | undefined) => void; numberOfMonths?: number; disabled?: (date: Date) => boolean; className?: string }`
 
-- [ ] **Step 1: Install the dependency**
+- [x] **Step 1: Install the dependency**
 
 Run: `npm install react-day-picker@^10.0.1`
 Expected: `package.json` gains `"react-day-picker": "^10.0.1"` under `dependencies`.
 
-- [ ] **Step 2: Write the failing test**
+- [x] **Step 2: Write the failing test**
 
 Create `tests/components/calendar.test.tsx`:
 
@@ -812,12 +812,12 @@ describe("Calendar", () => {
 });
 ```
 
-- [ ] **Step 3: Run the test to verify it fails**
+- [x] **Step 3: Run the test to verify it fails**
 
 Run: `npx vitest run tests/components/calendar.test.tsx`
 Expected: FAIL — `Failed to resolve import "@/components/ui/calendar"`.
 
-- [ ] **Step 4: Create the popover wrapper**
+- [x] **Step 4: Create the popover wrapper**
 
 Create `components/ui/popover.tsx`. This mirrors `components/ui/dialog.tsx`
 one-for-one — same `data-slot` convention, same Base UI part names:
@@ -866,7 +866,7 @@ function PopoverContent({
 export { Popover, PopoverTrigger, PopoverContent }
 ```
 
-- [ ] **Step 5: Create the calendar**
+- [x] **Step 5: Create the calendar**
 
 Create `components/ui/calendar.tsx`. `react-day-picker` v10 ships its own
 stylesheet, but this project is Tailwind-only, so pass `classNames` explicitly
@@ -946,7 +946,7 @@ export function Calendar({
 }
 ```
 
-- [ ] **Step 6: Run the test to verify it passes**
+- [x] **Step 6: Run the test to verify it passes**
 
 Run: `npx vitest run tests/components/calendar.test.tsx`
 Expected: PASS.
@@ -955,7 +955,7 @@ If the "renders two months" assertion fails because the caption text is split
 across elements, use `screen.getByText((_, el) => el?.textContent === "July 2026")`
 instead — do not weaken the assertion to a substring match on the whole document.
 
-- [ ] **Step 7: Commit**
+- [x] **Step 7: Commit**
 
 ```bash
 git add package.json package-lock.json components/ui/popover.tsx components/ui/calendar.tsx tests/components/calendar.test.tsx
@@ -975,7 +975,7 @@ git commit -m "feat(ui): add Base UI popover and react-day-picker range calendar
 - Consumes: `Popover`/`PopoverTrigger`/`PopoverContent` (Task 3), `Calendar` (Task 3), `parseDateRange`/`resolvePreset`/`formatRangeLabel`/`RANGE_PRESETS`/`startOfDayUtc`/`dayKey`/`type DateRange` (Task 1), `getFinanceDashboardSummary`/`getDailyIncomeExpense` (Task 2).
 - Produces: `DateRangePicker` — props `{ range: DateRange }`. Pushes `?from=YYYY-MM-DD&to=YYYY-MM-DD` on change.
 
-- [ ] **Step 1: Write the failing test**
+- [x] **Step 1: Write the failing test**
 
 Create `tests/components/date-range-picker.test.tsx`:
 
@@ -1032,12 +1032,12 @@ Add fake timers around the suite by putting this immediately after the imports:
 vi.useFakeTimers({ shouldAdvanceTime: true });
 ```
 
-- [ ] **Step 2: Run the test to verify it fails**
+- [x] **Step 2: Run the test to verify it fails**
 
 Run: `npx vitest run tests/components/date-range-picker.test.tsx`
 Expected: FAIL — cannot resolve `date-range-picker`.
 
-- [ ] **Step 3: Write the picker**
+- [x] **Step 3: Write the picker**
 
 Create `app/(dashboard)/accounts/dashboard/date-range-picker.tsx`:
 
@@ -1149,12 +1149,12 @@ Note the `render={...}` prop on `PopoverTrigger` — that is the Base UI way of
 composing a trigger with your own button, the same pattern `dialog.tsx` uses for
 its close button. Do not reach for Radix's `asChild`.
 
-- [ ] **Step 4: Run the test to verify it passes**
+- [x] **Step 4: Run the test to verify it passes**
 
 Run: `npx vitest run tests/components/date-range-picker.test.tsx`
 Expected: PASS.
 
-- [ ] **Step 5: Wire the page to searchParams**
+- [x] **Step 5: Wire the page to searchParams**
 
 Replace `app/(dashboard)/accounts/dashboard/page.tsx` entirely:
 
@@ -1259,7 +1259,7 @@ Before writing this file, read
 `node_modules/next/dist/docs/01-app/03-api-reference/03-file-conventions/page.md`
 to confirm the `searchParams` prop shape for this Next version.
 
-- [ ] **Step 6: Verify the whole suite and types**
+- [x] **Step 6: Verify the whole suite and types**
 
 Run: `npm test`
 Expected: PASS.
@@ -1267,7 +1267,7 @@ Expected: PASS.
 Run: `npx tsc --noEmit`
 Expected: no errors.
 
-- [ ] **Step 7: Verify in the running app**
+- [x] **Step 7: Verify in the running app**
 
 Run: `npm run dev`, open `/accounts/dashboard`.
 Expected: preset buttons render; clicking "This month" changes the URL to
@@ -1275,7 +1275,7 @@ Expected: preset buttons render; clicking "This month" changes the URL to
 URL keeps the same range. The chart line has no gaps on days with no
 transactions.
 
-- [ ] **Step 8: Commit**
+- [x] **Step 8: Commit**
 
 ```bash
 git add "app/(dashboard)/accounts/dashboard/date-range-picker.tsx" "app/(dashboard)/accounts/dashboard/page.tsx" tests/components/date-range-picker.test.tsx
@@ -1298,7 +1298,7 @@ git commit -m "feat(accounts): add date range filter to finance dashboard"
   - `getActiveDiscountCardInfo(customerId: string): Promise<{ cardId: string | null; discountPercent: number }>` exported from `actions/invoices.ts`
   - `getActiveDiscountForCustomer(customerId: string): Promise<number>` keeps its existing signature — `app/api/job-cards/[id]/pdf/route.ts:99` depends on it.
 
-- [ ] **Step 1: Write the failing test**
+- [x] **Step 1: Write the failing test**
 
 Create `tests/integration/discount-card-usage.test.ts`:
 
@@ -1410,12 +1410,12 @@ describe("invoice → discount card link", () => {
 });
 ```
 
-- [ ] **Step 2: Run the test to verify it fails**
+- [x] **Step 2: Run the test to verify it fails**
 
 Run: `npx vitest run tests/integration/discount-card-usage.test.ts`
 Expected: FAIL — `expected undefined to be '…'`, because `discountCardId` is not on the schema.
 
-- [ ] **Step 3: Add the schema field**
+- [x] **Step 3: Add the schema field**
 
 In `models/Invoice.ts`, inside `invoiceSchema`, add immediately after the
 `discountPercent` line:
@@ -1437,7 +1437,7 @@ invoiceSchema.index({ discountCardId: 1, status: 1 });
 The compound index matches how usage is queried in Task 6 (`discountCardId` plus
 `status: "paid"`).
 
-- [ ] **Step 4: Persist the card id when generating an invoice**
+- [x] **Step 4: Persist the card id when generating an invoice**
 
 In `actions/invoices.ts`, add a new export next to the existing
 `getActiveDiscountForCustomer` — **keep the old function**, the job-card PDF
@@ -1479,12 +1479,12 @@ with:
 and add `discountCardId,` to the `Invoice.create({ ... })` object, immediately
 after the `discountPercent,` line.
 
-- [ ] **Step 5: Run the test to verify it passes**
+- [x] **Step 5: Run the test to verify it passes**
 
 Run: `npx vitest run tests/integration/discount-card-usage.test.ts`
 Expected: PASS.
 
-- [ ] **Step 6: Commit**
+- [x] **Step 6: Commit**
 
 ```bash
 git add models/Invoice.ts actions/invoices.ts tests/integration/discount-card-usage.test.ts
@@ -1507,7 +1507,7 @@ git commit -m "feat(invoices): record which discount card an invoice used"
   - `getDiscountCardUsage(cardId: string): Promise<DiscountCardUsage & { invoices: UsageInvoiceRow[] }>` where `UsageInvoiceRow = { _id: string; invoiceNumber: string; createdAt: string; subtotal: number; discountAmount: number; total: number }`
   - `getDiscountCardById(id: string)` — the card populated with `customerId` (`name`, `phone`), or `null`
 
-- [ ] **Step 1: Write the failing test**
+- [x] **Step 1: Write the failing test**
 
 Append to `tests/integration/discount-card-usage.test.ts`:
 
@@ -1615,12 +1615,12 @@ describe("discount card usage", () => {
 });
 ```
 
-- [ ] **Step 2: Run the test to verify it fails**
+- [x] **Step 2: Run the test to verify it fails**
 
 Run: `npx vitest run tests/integration/discount-card-usage.test.ts`
 Expected: FAIL — `getDiscountCardUsage is not a function`.
 
-- [ ] **Step 3: Implement the usage queries**
+- [x] **Step 3: Implement the usage queries**
 
 In `actions/discountCards.ts`, add these imports at the top of the import block:
 
@@ -1742,12 +1742,12 @@ export async function getDiscountCardById(id: string) {
 }
 ```
 
-- [ ] **Step 4: Run the test to verify it passes**
+- [x] **Step 4: Run the test to verify it passes**
 
 Run: `npx vitest run tests/integration/discount-card-usage.test.ts`
 Expected: PASS.
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ```bash
 git add actions/discountCards.ts tests/integration/discount-card-usage.test.ts
@@ -1767,7 +1767,7 @@ git commit -m "feat(discount-cards): derive usage count and total discount given
 - Consumes: `getDiscountCardUsageMap`, `getDiscountCardUsage`, `type DiscountCardUsage` (Task 6).
 - Produces: `DiscountCardList` gains a required prop `usage: Record<string, DiscountCardUsage>`.
 
-- [ ] **Step 1: Pass the usage map from the list page**
+- [x] **Step 1: Pass the usage map from the list page**
 
 Replace `app/(dashboard)/discount-cards/page.tsx`:
 
@@ -1794,7 +1794,7 @@ export default async function DiscountCardsPage() {
 }
 ```
 
-- [ ] **Step 2: Render the usage strip**
+- [x] **Step 2: Render the usage strip**
 
 In `app/(dashboard)/discount-cards/discount-card-list.tsx`:
 
@@ -1868,7 +1868,7 @@ and change its matching closing `</div>` (the outermost one for that card) to
 `</Link>`. The `key` moves to the `Link`; do not leave a duplicate `key` on an
 inner element.
 
-- [ ] **Step 3: Show usage on the customer page**
+- [x] **Step 3: Show usage on the customer page**
 
 In `app/(dashboard)/customers/[id]/page.tsx`:
 
@@ -1905,7 +1905,7 @@ with:
                     </p>
 ```
 
-- [ ] **Step 4: Verify types and the suite**
+- [x] **Step 4: Verify types and the suite**
 
 Run: `npx tsc --noEmit`
 Expected: no errors.
@@ -1913,7 +1913,7 @@ Expected: no errors.
 Run: `npm test`
 Expected: PASS.
 
-- [ ] **Step 5: Verify in the running app**
+- [x] **Step 5: Verify in the running app**
 
 Run: `npm run dev`, open `/discount-cards`.
 Expected: every card shows either "Not used yet" or `N× · ৳X saved`; clicking a
@@ -1921,7 +1921,7 @@ card navigates to `/discount-cards/<id>` (a 404 until Task 8 — that is expecte
 at this point). `/customers/<id>` shows the same numbers on the amber membership
 banner.
 
-- [ ] **Step 6: Commit**
+- [x] **Step 6: Commit**
 
 ```bash
 git add "app/(dashboard)/discount-cards/page.tsx" "app/(dashboard)/discount-cards/discount-card-list.tsx" "app/(dashboard)/customers/[id]/page.tsx"
@@ -1939,7 +1939,7 @@ git commit -m "feat(discount-cards): show usage count and savings on card list a
 - Consumes: `getDiscountCardById`, `getDiscountCardUsage` (Task 6).
 - Produces: route `/discount-cards/[id]`.
 
-- [ ] **Step 1: Write the page**
+- [x] **Step 1: Write the page**
 
 Create `app/(dashboard)/discount-cards/[id]/page.tsx`:
 
@@ -2108,19 +2108,19 @@ Before writing this, confirm the `params` prop shape in
 `node_modules/next/dist/docs/01-app/03-api-reference/03-file-conventions/page.md` —
 it is a `Promise` in this version.
 
-- [ ] **Step 2: Verify types**
+- [x] **Step 2: Verify types**
 
 Run: `npx tsc --noEmit`
 Expected: no errors.
 
-- [ ] **Step 3: Verify in the running app**
+- [x] **Step 3: Verify in the running app**
 
 Run: `npm run dev`, click a card on `/discount-cards`.
 Expected: the detail page renders; a never-used card shows the "Not used yet"
 empty state; a used card lists its paid invoices and each invoice number links
 through to `/invoices/<id>`.
 
-- [ ] **Step 4: Commit**
+- [x] **Step 4: Commit**
 
 ```bash
 git add "app/(dashboard)/discount-cards/[id]/page.tsx"
@@ -2145,7 +2145,7 @@ The matching rule and the DB pass are both exported, and neither calls
 `process.exit`. The risky parts — deciding which card a historical invoice used,
 and whether a dry run really writes nothing — are then directly testable.
 
-- [ ] **Step 1: Write the failing test**
+- [x] **Step 1: Write the failing test**
 
 Create `tests/integration/backfill-discount-card.test.ts`:
 
@@ -2372,12 +2372,12 @@ describe("runBackfill", () => {
 });
 ```
 
-- [ ] **Step 2: Run the test to verify it fails**
+- [x] **Step 2: Run the test to verify it fails**
 
 Run: `npx vitest run tests/integration/backfill-discount-card.test.ts`
 Expected: FAIL — cannot resolve `@/scripts/backfill-invoice-discount-card`.
 
-- [ ] **Step 3: Write the script**
+- [x] **Step 3: Write the script**
 
 Create `scripts/backfill-invoice-discount-card.ts`, following the
 `scripts/migrate-departments.ts` pattern:
@@ -2542,12 +2542,12 @@ if (process.argv[1] && process.argv[1].includes("backfill-invoice-discount-card"
 }
 ```
 
-- [ ] **Step 4: Run the test to verify it passes**
+- [x] **Step 4: Run the test to verify it passes**
 
 Run: `npx vitest run tests/integration/backfill-discount-card.test.ts`
 Expected: PASS.
 
-- [ ] **Step 5: Verify the dry run against the real database**
+- [x] **Step 5: Verify the dry run against the real database**
 
 Run: `npx tsx scripts/backfill-invoice-discount-card.ts`
 Expected: prints `DRY RUN (no writes)`, the counts, and the skipped invoice
@@ -2556,7 +2556,7 @@ numbers. Confirm nothing was written by re-running it and seeing identical count
 Do **not** run `--apply` as part of implementation — that is the user's call once
 they have read the dry-run report.
 
-- [ ] **Step 6: Run the full suite and type check**
+- [x] **Step 6: Run the full suite and type check**
 
 Run: `npm test`
 Expected: PASS.
@@ -2564,7 +2564,7 @@ Expected: PASS.
 Run: `npx tsc --noEmit`
 Expected: no errors.
 
-- [ ] **Step 7: Commit**
+- [x] **Step 7: Commit**
 
 ```bash
 git add scripts/backfill-invoice-discount-card.ts tests/integration/backfill-discount-card.test.ts
