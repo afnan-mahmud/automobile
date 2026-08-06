@@ -2,14 +2,21 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { StatCard } from "@/components/stat-card";
 import { requirePageRole } from "@/lib/auth";
 import { getFinanceDashboardSummary, getDailyIncomeExpense } from "@/actions/accounts";
-import { resolvePreset } from "@/lib/dateRange";
+import { parseDateRange, formatRangeLabel } from "@/lib/dateRange";
 import { CHART_COLORS } from "@/lib/chartColors";
 import { IncomeExpenseChart } from "./income-expense-chart";
+import { DateRangePicker } from "./date-range-picker";
 
-export default async function FinanceDashboardPage() {
+export default async function FinanceDashboardPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ [key: string]: string | string[] | undefined }>;
+}) {
   await requirePageRole(["admin"]);
 
-  const range = resolvePreset("last30");
+  const { from, to } = await searchParams;
+  const range = parseDateRange(from, to);
+
   const [summary, daily] = await Promise.all([
     getFinanceDashboardSummary(range),
     getDailyIncomeExpense(range),
@@ -21,9 +28,18 @@ export default async function FinanceDashboardPage() {
     value: d.income - d.expense,
   }));
 
+  const rangeLabel = formatRangeLabel(range);
+
   return (
     <div className="space-y-6">
-      <h2 className="text-xl font-semibold">Finance Dashboard</h2>
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+        <div>
+          <h2 className="text-xl font-semibold">Finance Dashboard</h2>
+          <p className="mt-0.5 text-sm text-muted-foreground">{rangeLabel}</p>
+        </div>
+      </div>
+
+      <DateRangePicker range={range} />
 
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
         <StatCard
@@ -38,7 +54,10 @@ export default async function FinanceDashboardPage() {
           sparkline={profitSparkline}
           sparklineColor={CHART_COLORS.chart3}
         />
-        <StatCard title="Outstanding Dues" value={`৳${summary.outstandingDues.toFixed(2)}`} />
+        <StatCard
+          title="Outstanding Dues (as of today)"
+          value={`৳${summary.outstandingDues.toFixed(2)}`}
+        />
         <StatCard
           title="Total Expense"
           value={`৳${summary.totalExpense.toFixed(2)}`}
@@ -64,7 +83,7 @@ export default async function FinanceDashboardPage() {
 
       <Card>
         <CardHeader>
-          <CardTitle>Income vs Expense (last 30 days)</CardTitle>
+          <CardTitle>Income vs Expense — {rangeLabel}</CardTitle>
         </CardHeader>
         <CardContent>
           <IncomeExpenseChart data={daily} />
