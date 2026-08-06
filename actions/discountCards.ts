@@ -15,7 +15,9 @@ import { revalidatePath } from "next/cache";
 import { connectToDatabase } from "@/lib/db";
 import { requireRole } from "@/lib/auth";
 import { serialize } from "@/lib/serialize";
+import mongoose from "mongoose";
 import { DiscountCard } from "@/models/DiscountCard";
+import { Invoice } from "@/models/Invoice";
 import type { ActionResult } from "@/actions/customers";
 
 const createDiscountCardSchema = z.object({
@@ -82,6 +84,29 @@ export async function updateDiscountCard(
   }
 
   revalidatePath("/discount-cards");
+  if (updated.customerId) {
+    revalidatePath(`/customers/${updated.customerId}`);
+  }
+  return { success: true, data: { id } };
+}
+
+export async function cancelDiscountCard(
+  id: string
+): Promise<ActionResult<{ id: string }>> {
+  await requireRole(["admin", "manager"]);
+  await connectToDatabase();
+
+  const card = await DiscountCard.findByIdAndUpdate(
+    id,
+    { active: false },
+    { new: true }
+  );
+  if (!card) {
+    return { success: false, error: "Discount card not found" };
+  }
+
+  revalidatePath("/discount-cards");
+  revalidatePath(`/customers/${card.customerId}`);
   return { success: true, data: { id } };
 }
 
@@ -118,5 +143,114 @@ export async function findActiveDiscountCard(customerId: string) {
 export async function getActiveDiscountCardForCustomer(customerId: string) {
   await requireRole(["admin", "manager"]);
   const card = await findActiveDiscountCard(customerId);
+  return card ? serialize(card) : null;
+}
+
+export type DiscountCardUsage = {
+  timesUsed: number;
+  totalDiscountAmount: number;
+};
+
+export type UsageInvoiceRow = {
+  _id: string;
+  invoiceNumber: string;
+  createdAt: string;
+  subtotal: number;
+  discountAmount: number;
+  total: number;
+};
+
+/**
+ * Usage is DERIVED, never stored as a counter on the card.
+ *
+ * markInvoicePaid can run more than once for the same invoice (a partial
+ * payment followed by the full one), so an incrementing field would
+ * double-count. Querying instead stays correct through repeat payments,
+ * invoice edits and invoice deletion.
+ *
+ * "Used" means the invoice reached status "paid" — draft, sent and
+ * partially_paid do not count, because the money has not fully arrived.
+ */
+const PAID_STATUS = "paid";
+
+export async function getDiscountCardUsageMap(
+  cardIds: string[]
+): Promise<Record<string, DiscountCardUsage>> {
+  await requireRole(["admin", "manager"]);
+
+  const empty: Record<string, DiscountCardUsage> = {};
+  for (const id of cardIds) {
+    empty[id] = { timesUsed: 0, totalDiscountAmount: 0 };
+  }
+  if (cardIds.length === 0) return empty;
+
+  await connectToDatabase();
+
+  const objectIds = cardIds
+    .filter((id) => mongoose.Types.ObjectId.isValid(id))
+    .map((id) => new mongoose.Types.ObjectId(id));
+
+  const rows = await Invoice.aggregate([
+    { $match: { discountCardId: { $in: objectIds }, status: PAID_STATUS } },
+    {
+      $group: {
+        _id: "$discountCardId",
+        timesUsed: { $sum: 1 },
+        totalDiscountAmount: { $sum: "$discountAmount" },
+      },
+    },
+  ]);
+
+  for (const row of rows) {
+    empty[row._id.toString()] = {
+      timesUsed: row.timesUsed,
+      totalDiscountAmount: row.totalDiscountAmount,
+    };
+  }
+
+  return empty;
+}
+
+export async function getDiscountCardUsage(
+  cardId: string
+): Promise<DiscountCardUsage & { invoices: UsageInvoiceRow[] }> {
+  await requireRole(["admin", "manager"]);
+  await connectToDatabase();
+
+  if (!mongoose.Types.ObjectId.isValid(cardId)) {
+    return { timesUsed: 0, totalDiscountAmount: 0, invoices: [] };
+  }
+
+  const invoices = await Invoice.find({
+    discountCardId: new mongoose.Types.ObjectId(cardId),
+    status: PAID_STATUS,
+  })
+    .sort({ createdAt: -1 })
+    .select("invoiceNumber createdAt subtotal discountAmount total")
+    .lean();
+
+  const totalDiscountAmount = invoices.reduce(
+    (sum, inv) => sum + (inv.discountAmount ?? 0),
+    0
+  );
+
+  return {
+    timesUsed: invoices.length,
+    // Guards against float drift when summing many two-decimal amounts.
+    totalDiscountAmount: Math.round(totalDiscountAmount * 100) / 100,
+    invoices: serialize(invoices) as UsageInvoiceRow[],
+  };
+}
+
+export async function getDiscountCardById(id: string) {
+  await requireRole(["admin", "manager"]);
+  await connectToDatabase();
+
+  if (!mongoose.Types.ObjectId.isValid(id)) return null;
+
+  const card = await DiscountCard.findById(id)
+    .populate("customerId", "name phone")
+    .lean();
+
   return card ? serialize(card) : null;
 }

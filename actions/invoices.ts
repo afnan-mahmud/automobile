@@ -13,24 +13,26 @@ import { AccountTransaction, PAYMENT_METHODS } from "@/models/AccountTransaction
 import { findActiveDiscountCard } from "@/actions/discountCards";
 import "@/models/Customer";
 import type { ActionResult } from "@/actions/customers";
-
-type LineItem = {
-  description: string;
-  quantity: number;
-  unitPrice: number;
-  total: number;
-};
+import { computeTotals, type InvoiceLineItem as LineItem } from "@/lib/invoices";
 
 export async function getActiveDiscountForCustomer(customerId: string): Promise<number> {
   const card = await findActiveDiscountCard(customerId);
   return card?.discountPercent ?? 0;
 }
 
-function computeTotals(lineItems: LineItem[], discountPercent: number) {
-  const subtotal = lineItems.reduce((sum, li) => sum + li.total, 0);
-  const discountAmount = Math.round(subtotal * (discountPercent / 100) * 100) / 100;
-  const total = subtotal - discountAmount;
-  return { subtotal, discountAmount, total };
+/**
+ * Returns both the discount percentage and which card granted it, so the
+ * invoice can record the source. getActiveDiscountForCustomer stays for
+ * callers that only need the number (app/api/job-cards/[id]/pdf/route.ts).
+ */
+export async function getActiveDiscountCardInfo(
+  customerId: string
+): Promise<{ cardId: string | null; discountPercent: number }> {
+  const card = await findActiveDiscountCard(customerId);
+  return {
+    cardId: card ? card._id.toString() : null,
+    discountPercent: card?.discountPercent ?? 0,
+  };
 }
 
 export async function generateInvoiceFromJobCard(
@@ -45,7 +47,7 @@ export async function generateInvoiceFromJobCard(
   }
 
   const lineItems: LineItem[] = jobCard.tasks.map((task: { description: string }) => ({
-    description: `Labor: ${task.description}`,
+    description: `Service Charge: ${task.description}`,
     quantity: 1,
     unitPrice: 0,
     total: 0,
@@ -62,7 +64,7 @@ export async function generateInvoiceFromJobCard(
     });
   }
 
-  const discountPercent = await getActiveDiscountForCustomer(
+  const { cardId: discountCardId, discountPercent } = await getActiveDiscountCardInfo(
     jobCard.customerId.toString()
   );
   const { subtotal, discountAmount, total } = computeTotals(lineItems, discountPercent);
@@ -75,6 +77,7 @@ export async function generateInvoiceFromJobCard(
     customerId: jobCard.customerId,
     lineItems,
     discountPercent,
+    discountCardId,
     subtotal,
     discountAmount,
     total,
@@ -214,4 +217,25 @@ export async function getInvoiceById(id: string) {
   }
 
   return serialize(invoice);
+}
+
+export async function deleteInvoice(id: string): Promise<ActionResult<{ id: string }>> {
+  await requireRole(["admin", "manager"]);
+  await connectToDatabase();
+
+  const invoice = await Invoice.findById(id);
+  if (!invoice) {
+    return { success: false, error: "Invoice not found" };
+  }
+
+  await AccountTransaction.deleteMany({ relatedInvoiceId: invoice._id });
+  await Invoice.findByIdAndDelete(id);
+
+  revalidatePath("/invoices");
+  revalidatePath(`/invoices/${id}`);
+  revalidatePath("/accounts");
+  revalidatePath("/accounts/dashboard");
+  revalidatePath("/dashboard");
+
+  return { success: true, data: { id } };
 }

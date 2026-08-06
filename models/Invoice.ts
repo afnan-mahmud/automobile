@@ -32,6 +32,11 @@ const invoiceSchema = new Schema(
     customerId: { type: Schema.Types.ObjectId, ref: "Customer", required: true },
     lineItems: { type: [lineItemSchema], default: [] },
     discountPercent: { type: Number, default: 0 },
+    discountCardId: {
+      type: Schema.Types.ObjectId,
+      ref: "DiscountCard",
+      default: null,
+    },
     subtotal: { type: Number, required: true, default: 0 },
     discountAmount: { type: Number, required: true, default: 0 },
     total: { type: Number, required: true, default: 0 },
@@ -42,6 +47,7 @@ const invoiceSchema = new Schema(
 );
 
 invoiceSchema.index({ jobCardId: 1 });
+invoiceSchema.index({ discountCardId: 1, status: 1 });
 
 export type InvoiceDoc = InferSchemaType<typeof invoiceSchema> & {
   _id: mongoose.Types.ObjectId;
