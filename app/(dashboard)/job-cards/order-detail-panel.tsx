@@ -18,6 +18,7 @@ import {
   Package,
   ExternalLink,
   ArrowRight,
+  Printer,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import type { JobCardStatus, TaskStatus } from "@/types/jobCard";
@@ -390,7 +391,16 @@ export function OrderDetailPanel({
 
         {/* ── Footer CTA ─────────────────────────────────────────────────── */}
         {data && (
-          <div className="border-t bg-background/80 p-4 backdrop-blur">
+          <div className="border-t bg-background/80 p-4 backdrop-blur space-y-2">
+            <a
+              href={`/api/job-cards/${data._id}/pdf`}
+              target="_blank"
+              rel="noreferrer"
+              className="flex w-full items-center justify-center gap-2 rounded-xl border bg-background px-4 py-2.5 text-sm font-medium text-foreground hover:bg-muted transition-colors shadow-sm"
+            >
+              <Printer className="size-4 text-muted-foreground" />
+              Download Bill / Estimate PDF
+            </a>
             <Link
               href={`/job-cards/${data._id}`}
               className="flex w-full items-center justify-center gap-2 rounded-xl bg-primary px-4 py-3 text-sm font-semibold text-primary-foreground transition-colors hover:bg-primary/90"

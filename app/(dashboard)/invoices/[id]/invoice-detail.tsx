@@ -19,9 +19,9 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { updateInvoice, markInvoicePaid } from "@/actions/invoices";
+import { updateInvoice, markInvoicePaid, deleteInvoice } from "@/actions/invoices";
 import type { InvoiceStatus } from "@/types/invoice";
-import { FileText, CheckCircle2, Clock, CreditCard, Download, Edit, Settings2, Banknote, Percent, Layers } from "lucide-react";
+import { FileText, CheckCircle2, Clock, CreditCard, Download, Edit, Settings2, Banknote, Percent, Layers, Trash2, AlertTriangle } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 type LineItem = { description: string; quantity: number; unitPrice: number; total: number };
@@ -56,6 +56,9 @@ export function InvoiceDetail({ invoice }: { invoice: Invoice }) {
   const [partial, setPartial] = useState(false);
   const [payError, setPayError] = useState<string | null>(null);
   const [isPaying, setIsPaying] = useState(false);
+  const [deleteOpen, setDeleteOpen] = useState(false);
+  const [isDeleting, setIsDeleting] = useState(false);
+  const [deleteError, setDeleteError] = useState<string | null>(null);
 
   function updateLine(index: number, patch: Partial<LineItem>) {
     setLineItems((prev) =>
@@ -99,6 +102,19 @@ export function InvoiceDetail({ invoice }: { invoice: Invoice }) {
     }
     setPayOpen(false);
     router.refresh();
+  }
+
+  async function handleDelete() {
+    setDeleteError(null);
+    setIsDeleting(true);
+    const result = await deleteInvoice(invoice._id);
+    setIsDeleting(false);
+    if (!result.success) {
+      setDeleteError(result.error);
+      return;
+    }
+    setDeleteOpen(false);
+    router.push("/invoices");
   }
 
   return (
@@ -226,7 +242,7 @@ export function InvoiceDetail({ invoice }: { invoice: Invoice }) {
           <div className="mt-6 flex flex-col items-end pt-4 border-t gap-1">
             <p className="text-sm text-muted-foreground">Subtotal: ৳{invoice.subtotal.toFixed(2)}</p>
             {invoice.discountAmount > 0 && (
-              <p className="text-sm text-pink-600 dark:text-pink-400">Discount ({invoice.discountPercent}%): -৳{invoice.discountAmount.toFixed(2)}</p>
+              <p className="text-sm text-pink-600 dark:text-pink-400">Discount ({invoice.discountPercent}% on Service Charge): -৳{invoice.discountAmount.toFixed(2)}</p>
             )}
             <p className="text-xl font-bold mt-1">Final Total: ৳{invoice.total.toFixed(2)}</p>
           </div>
@@ -357,6 +373,48 @@ export function InvoiceDetail({ invoice }: { invoice: Invoice }) {
                   {payError && <p className="text-sm text-destructive">{payError}</p>}
                   <Button onClick={handleMarkPaid} disabled={isPaying} className="w-full rounded-xl h-11">
                     {isPaying ? "Saving..." : "Confirm Payment"}
+                  </Button>
+                </div>
+              </DialogContent>
+            </Dialog>
+
+            <Dialog open={deleteOpen} onOpenChange={setDeleteOpen}>
+              <DialogTrigger render={
+                <Button variant="outline" className="w-full justify-start rounded-xl h-11 border-rose-200/80 text-rose-600 hover:bg-rose-50 hover:text-rose-700 dark:border-rose-900/50 dark:text-rose-400 dark:hover:bg-rose-950/40">
+                  <Trash2 className="mr-2 size-4" />
+                  Delete Invoice
+                </Button>
+              } />
+              <DialogContent className="sm:max-w-md rounded-3xl">
+                <DialogHeader>
+                  <div className="mx-auto flex size-12 items-center justify-center rounded-full bg-rose-100 dark:bg-rose-950/50 text-rose-600 dark:text-rose-400 mb-2">
+                    <AlertTriangle className="size-6" />
+                  </div>
+                  <DialogTitle className="text-center text-lg">Delete Invoice {invoice.invoiceNumber}?</DialogTitle>
+                </DialogHeader>
+                <div className="space-y-3 py-2 text-center text-sm text-muted-foreground">
+                  <p>Are you sure you want to permanently delete this invoice?</p>
+                  <div className="rounded-xl border border-rose-200/50 bg-rose-50/50 p-3 text-xs text-rose-700 dark:border-rose-900/50 dark:bg-rose-950/30 dark:text-rose-300 text-left">
+                    ⚠️ Deleting this invoice will remove it completely and automatically deduct/reverse any payments recorded for it from Accounts and Finance metrics.
+                  </div>
+                  {deleteError && <p className="text-sm font-medium text-destructive">{deleteError}</p>}
+                </div>
+                <div className="flex items-center justify-end gap-3 pt-2">
+                  <Button
+                    variant="outline"
+                    className="rounded-xl"
+                    onClick={() => setDeleteOpen(false)}
+                    disabled={isDeleting}
+                  >
+                    Cancel
+                  </Button>
+                  <Button
+                    variant="destructive"
+                    className="rounded-xl"
+                    onClick={handleDelete}
+                    disabled={isDeleting}
+                  >
+                    {isDeleting ? "Deleting..." : "Delete Invoice"}
                   </Button>
                 </div>
               </DialogContent>

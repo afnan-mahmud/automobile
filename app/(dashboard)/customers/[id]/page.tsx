@@ -1,11 +1,14 @@
 import { notFound } from "next/navigation";
 import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
 import { requirePageRole } from "@/lib/auth";
 import { getCustomerWithVehicles } from "@/actions/customers";
-import { getActiveDiscountCardForCustomer } from "@/actions/discountCards";
+import { getActiveDiscountCardForCustomer, getDiscountCardUsage } from "@/actions/discountCards";
 import { AddVehicleDialog } from "./add-vehicle-dialog";
+import { EditCustomerDialog } from "./edit-customer-dialog";
+import { CancelCardDialog } from "./cancel-card-dialog";
 import { AssignDiscountDialog } from "../../discount-cards/assign-discount-dialog";
-import { User, Phone, Mail, MapPin, Car, Tag, Settings2 } from "lucide-react";
+import { User, Phone, Mail, MapPin, Car, Tag, Settings2, Pencil, XCircle } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 export default async function CustomerDetailPage({
@@ -23,6 +26,9 @@ export default async function CustomerDetailPage({
 
   const { customer, vehicles } = result;
   const activeDiscountCard = await getActiveDiscountCardForCustomer(id);
+  const discountUsage = activeDiscountCard
+    ? await getDiscountCardUsage(activeDiscountCard._id.toString())
+    : null;
 
   return (
     <div className="grid grid-cols-1 items-start gap-6 lg:grid-cols-[1fr_360px]">
@@ -42,23 +48,49 @@ export default async function CustomerDetailPage({
                   Customer Profile
                 </p>
               </div>
-              <h1 className="text-3xl font-bold tracking-tight text-foreground">
-                {customer.name}
-              </h1>
+              <div className="flex flex-wrap items-center gap-3">
+                <h1 className="text-3xl font-bold tracking-tight text-foreground">
+                  {customer.name}
+                </h1>
+                <EditCustomerDialog
+                  customer={customer}
+                  trigger={
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      className="h-8 rounded-full border-primary/30 bg-background/80 px-3 text-xs font-medium gap-1.5 shadow-sm hover:bg-background"
+                    >
+                      <Pencil className="size-3.5 text-primary" />
+                      Edit
+                    </Button>
+                  }
+                />
+              </div>
             </div>
             
             {activeDiscountCard && (
-              <div className="flex items-center gap-4 rounded-2xl bg-amber-50/80 dark:bg-amber-950/40 backdrop-blur-md border border-amber-200/50 dark:border-amber-900/50 px-5 py-3 shadow-sm">
-                <div className="flex size-12 shrink-0 items-center justify-center rounded-full bg-amber-100 dark:bg-amber-900 text-amber-600 dark:text-amber-400">
-                  <Tag className="size-6" />
+              <div className="flex flex-col sm:flex-row sm:items-center gap-3 rounded-2xl bg-amber-50/80 dark:bg-amber-950/40 backdrop-blur-md border border-amber-200/50 dark:border-amber-900/50 p-3 sm:px-5 sm:py-3 shadow-sm">
+                <div className="flex items-center gap-3">
+                  <div className="flex size-10 shrink-0 items-center justify-center rounded-full bg-amber-100 dark:bg-amber-900 text-amber-600 dark:text-amber-400">
+                    <Tag className="size-5" />
+                  </div>
+                  <div>
+                    <p className="font-semibold text-amber-900 dark:text-amber-200 leading-tight">
+                      {activeDiscountCard.discountPercent}% Discount
+                    </p>
+                    <p className="text-xs text-amber-700 dark:text-amber-400">
+                      {discountUsage && discountUsage.timesUsed > 0
+                        ? `Used ${discountUsage.timesUsed}× · ৳${discountUsage.totalDiscountAmount.toFixed(2)} saved`
+                        : "Active Membership · not used yet"}
+                    </p>
+                  </div>
                 </div>
-                <div>
-                  <p className="font-semibold text-amber-900 dark:text-amber-200">
-                    {activeDiscountCard.discountPercent}% Discount
-                  </p>
-                  <p className="text-sm text-amber-700 dark:text-amber-400">
-                    Active Membership
-                  </p>
+                <div className="sm:border-l sm:pl-3 border-amber-200/60 dark:border-amber-800/60">
+                  <CancelCardDialog
+                    discountCardId={activeDiscountCard._id.toString()}
+                    customerName={customer.name}
+                    discountPercent={activeDiscountCard.discountPercent}
+                  />
                 </div>
               </div>
             )}
@@ -156,9 +188,19 @@ export default async function CustomerDetailPage({
               Customer Actions
             </h3>
           </div>
-          <div className="p-5 space-y-4 flex flex-col">
+          <div className="p-5 space-y-3 flex flex-col">
+            <EditCustomerDialog
+              customer={customer}
+              trigger={
+                <Button variant="outline" className="w-full justify-start gap-2">
+                  <Pencil className="size-4 text-primary" />
+                  Edit Customer Info
+                </Button>
+              }
+            />
             <AddVehicleDialog customerId={id} />
-            <div className="relative">
+
+            <div className="relative my-1">
               <div className="absolute inset-0 flex items-center">
                 <span className="w-full border-t" />
               </div>
@@ -166,7 +208,33 @@ export default async function CustomerDetailPage({
                 <span className="bg-card px-2 text-muted-foreground">Membership</span>
               </div>
             </div>
-            <AssignDiscountDialog presetCustomerId={id} />
+
+            {activeDiscountCard ? (
+              <div className="space-y-2">
+                <CancelCardDialog
+                  discountCardId={activeDiscountCard._id.toString()}
+                  customerName={customer.name}
+                  discountPercent={activeDiscountCard.discountPercent}
+                  trigger={
+                    <Button variant="destructive" className="w-full justify-start gap-2">
+                      <XCircle className="size-4" />
+                      Cancel Discount Card
+                    </Button>
+                  }
+                />
+                <AssignDiscountDialog
+                  presetCustomerId={id}
+                  trigger={
+                    <Button variant="outline" size="sm" className="w-full justify-start gap-2">
+                      <Tag className="size-4 text-amber-500" />
+                      Change Discount ({activeDiscountCard.discountPercent}%)
+                    </Button>
+                  }
+                />
+              </div>
+            ) : (
+              <AssignDiscountDialog presetCustomerId={id} />
+            )}
           </div>
         </div>
       </div>

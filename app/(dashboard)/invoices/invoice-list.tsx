@@ -4,7 +4,14 @@ import { useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import { INVOICE_STATUSES, type InvoiceStatus } from "@/types/invoice";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import { type InvoiceStatus } from "@/types/invoice";
+import { deleteInvoice } from "@/actions/invoices";
 import {
   Search,
   FileText,
@@ -14,8 +21,9 @@ import {
   CheckCircle2,
   ChevronLeft,
   ChevronRight,
-  MoreHorizontal,
   User,
+  Trash2,
+  AlertTriangle,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
@@ -90,6 +98,24 @@ export function InvoiceList({ initialInvoices }: { initialInvoices: InvoiceRow[]
   const [tab, setTab] = useState<"all" | InvoiceStatus>("all");
   const [query, setQuery] = useState("");
   const [page, setPage] = useState(1);
+  const [deletingId, setDeletingId] = useState<string | null>(null);
+  const [deleteInvoiceNumber, setDeleteInvoiceNumber] = useState<string>("");
+  const [isDeleting, setIsDeleting] = useState(false);
+  const [deleteError, setDeleteError] = useState<string | null>(null);
+
+  async function handleDeleteConfirm() {
+    if (!deletingId) return;
+    setIsDeleting(true);
+    setDeleteError(null);
+    const result = await deleteInvoice(deletingId);
+    setIsDeleting(false);
+    if (!result.success) {
+      setDeleteError(result.error);
+      return;
+    }
+    setDeletingId(null);
+    router.refresh();
+  }
 
   const counts: Record<"all" | InvoiceStatus, number> = useMemo(() => ({
     all: initialInvoices.length,
@@ -319,10 +345,19 @@ export function InvoiceList({ initialInvoices }: { initialInvoices: InvoiceRow[]
             {/* Actions */}
             <div>
               <button
-                onClick={(e) => { e.preventDefault(); e.stopPropagation(); }}
-                className="rounded-md p-1 opacity-0 transition-opacity hover:bg-muted group-hover:opacity-100"
+                type="button"
+                onClick={(e) => {
+                  e.preventDefault();
+                  e.stopPropagation();
+                  setDeletingId(inv._id);
+                  setDeleteInvoiceNumber(inv.invoiceNumber);
+                  setDeleteError(null);
+                }}
+                className="rounded-lg p-2 text-muted-foreground transition-all hover:bg-rose-50 hover:text-rose-600 dark:hover:bg-rose-950/40 dark:hover:text-rose-400"
+                title="Delete Invoice"
+                aria-label="Delete Invoice"
               >
-                <MoreHorizontal className="size-4 text-muted-foreground" />
+                <Trash2 className="size-4" />
               </button>
             </div>
           </div>
@@ -371,6 +406,45 @@ export function InvoiceList({ initialInvoices }: { initialInvoices: InvoiceRow[]
           </div>
         </div>
       )}
+
+      {/* ── Delete Confirmation Modal ── */}
+      <Dialog open={!!deletingId} onOpenChange={(open) => !open && setDeletingId(null)}>
+        <DialogContent className="sm:max-w-md rounded-3xl">
+          <DialogHeader>
+            <div className="mx-auto flex size-12 items-center justify-center rounded-full bg-rose-100 dark:bg-rose-950/50 text-rose-600 dark:text-rose-400 mb-2">
+              <AlertTriangle className="size-6" />
+            </div>
+            <DialogTitle className="text-center text-lg">Delete Invoice {deleteInvoiceNumber}?</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-3 py-2 text-center text-sm text-muted-foreground">
+            <p>
+              Are you sure you want to delete this invoice?
+            </p>
+            <div className="rounded-xl border border-rose-200/50 bg-rose-50/50 p-3 text-xs text-rose-700 dark:border-rose-900/50 dark:bg-rose-950/30 dark:text-rose-300">
+              ⚠️ Deleting this invoice will permanently remove it and automatically reverse/deduct any payments recorded for it in Accounts and Finance calculations.
+            </div>
+            {deleteError && <p className="text-sm font-medium text-destructive">{deleteError}</p>}
+          </div>
+          <div className="flex items-center justify-end gap-3 pt-2">
+            <Button
+              variant="outline"
+              className="rounded-xl"
+              onClick={() => setDeletingId(null)}
+              disabled={isDeleting}
+            >
+              Cancel
+            </Button>
+            <Button
+              variant="destructive"
+              className="rounded-xl"
+              onClick={handleDeleteConfirm}
+              disabled={isDeleting}
+            >
+              {isDeleting ? "Deleting..." : "Delete Invoice"}
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

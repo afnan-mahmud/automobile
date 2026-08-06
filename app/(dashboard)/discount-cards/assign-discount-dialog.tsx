@@ -20,7 +20,13 @@ type Customer = { _id: string; name: string; phone: string };
 
 const today = () => new Date().toISOString().slice(0, 10);
 
-export function AssignDiscountDialog({ presetCustomerId }: { presetCustomerId?: string }) {
+export function AssignDiscountDialog({
+  presetCustomerId,
+  trigger,
+}: {
+  presetCustomerId?: string;
+  trigger?: React.ReactNode;
+}) {
   const router = useRouter();
   const [open, setOpen] = useState(false);
   const [query, setQuery] = useState("");
@@ -72,7 +78,15 @@ export function AssignDiscountDialog({ presetCustomerId }: { presetCustomerId?: 
 
   return (
     <Dialog open={open} onOpenChange={setOpen}>
-      <DialogTrigger render={<Button size="sm">Assign Discount Card</Button>} />
+      <DialogTrigger
+        render={
+          trigger ? (
+            (trigger as React.ReactElement)
+          ) : (
+            <Button size="sm">Assign Discount Card</Button>
+          )
+        }
+      />
       <DialogContent className="sm:max-w-md">
         <DialogHeader>
           <DialogTitle>Assign Discount Card</DialogTitle>

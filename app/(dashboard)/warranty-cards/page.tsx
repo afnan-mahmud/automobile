@@ -159,7 +159,6 @@ export default async function WarrantyCardsPage() {
                     target="_blank"
                     rel="noreferrer"
                     className="flex items-center gap-1.5 text-xs font-medium text-primary hover:underline"
-                    onClick={(e) => e.stopPropagation()}
                   >
                     <FileText className="size-3.5" />
                     View PDF

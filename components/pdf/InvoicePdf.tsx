@@ -1,27 +1,35 @@
 import { Document, Page, Text, View, StyleSheet } from "@react-pdf/renderer";
 
 const styles = StyleSheet.create({
-  page: { padding: 32, fontSize: 10, fontFamily: "Helvetica" },
-  header: { marginBottom: 16, borderBottom: 1, paddingBottom: 8 },
-  businessName: { fontSize: 18, fontWeight: 700 },
+  page: { padding: 32, fontSize: 10, fontFamily: "Helvetica", color: "#1e293b" },
+  header: { marginBottom: 16, borderBottom: 1, borderBottomColor: "#cbd5e1", paddingBottom: 10 },
+  businessName: { fontSize: 18, fontWeight: 700, color: "#0f172a" },
+  subHeader: { fontSize: 9, color: "#64748b", marginTop: 2 },
+  docTitle: { fontSize: 16, fontWeight: 700, textAlign: "right", color: "#0f172a" },
+  docBadge: { fontSize: 8, fontWeight: 700, color: "#64748b", textTransform: "uppercase", marginTop: 2, textAlign: "right" },
   row: { flexDirection: "row", justifyContent: "space-between", marginBottom: 4 },
-  section: { marginBottom: 12 },
+  section: { marginBottom: 14, backgroundColor: "#f8fafc", padding: 10, borderRadius: 4 },
+  sectionRow: { flexDirection: "row", justifyContent: "space-between", marginBottom: 3 },
   table: { display: "flex", width: "100%", marginTop: 8 },
-  tableRow: { flexDirection: "row", borderBottom: 1, borderBottomColor: "#e5e5e5", paddingVertical: 4 },
-  tableHeaderRow: { flexDirection: "row", borderBottom: 1, paddingVertical: 4, fontWeight: 700 },
-  colDescription: { width: "40%" },
-  colQty: { width: "15%", textAlign: "right" },
+  tableRow: { flexDirection: "row", borderBottom: 1, borderBottomColor: "#f1f5f9", paddingVertical: 5 },
+  tableHeaderRow: { flexDirection: "row", borderBottom: 1.5, borderBottomColor: "#cbd5e1", paddingVertical: 5, fontWeight: 700, color: "#334155" },
+  colDescription: { width: "45%" },
+  colQty: { width: "12%", textAlign: "right" },
   colPrice: { width: "20%", textAlign: "right" },
-  colTotal: { width: "25%", textAlign: "right" },
-  totalsBlock: { marginTop: 12, alignItems: "flex-end" },
-  totalsRow: { flexDirection: "row", gap: 12, marginBottom: 2 },
-  totalsLabel: { width: 100, textAlign: "right" },
-  totalsValue: { width: 80, textAlign: "right" },
-  note: { marginTop: 24, fontSize: 9, color: "#666666" },
+  colTotal: { width: "23%", textAlign: "right" },
+  totalsBlock: { marginTop: 14, alignItems: "flex-end" },
+  totalsRow: { flexDirection: "row", gap: 12, marginBottom: 3 },
+  totalsLabel: { width: 120, textAlign: "right", color: "#475569" },
+  totalsValue: { width: 90, textAlign: "right", color: "#0f172a" },
+  note: { marginTop: 24, fontSize: 8.5, color: "#64748b", borderTop: 1, borderTopColor: "#e2e8f0", paddingTop: 8 },
 });
 
 export type InvoicePdfProps = {
   invoiceNumber: string;
+  documentTitle?: string;
+  documentSubtitle?: string;
+  documentTypeLabel?: string;
+  badgeLabel?: string;
   customer: { name: string; phone: string };
   vehicle?: { registrationNumber: string; make?: string; model?: string } | null;
   lineItems: { description: string; quantity: number; unitPrice: number; total: number }[];
@@ -29,14 +37,19 @@ export type InvoicePdfProps = {
   discountPercent: number;
   discountAmount: number;
   total: number;
+  note?: string;
 };
 
 function money(value: number) {
-  return `৳${value.toFixed(2)}`;
+  return `৳${(value || 0).toFixed(2)}`;
 }
 
 export function InvoicePdf({
   invoiceNumber,
+  documentTitle = "Invoice",
+  documentSubtitle = "Car Workshop & Service Center",
+  documentTypeLabel = "Invoice #",
+  badgeLabel,
   customer,
   vehicle,
   lineItems,
@@ -44,18 +57,29 @@ export function InvoicePdf({
   discountPercent,
   discountAmount,
   total,
+  note = "See attached warranty card if applicable.",
 }: InvoicePdfProps) {
   return (
     <Document>
       <Page size="A4" style={styles.page}>
         <View style={styles.header}>
-          <Text style={styles.businessName}>Dhaka Automobiles</Text>
-          <Text>Car Workshop &amp; Service Center</Text>
+          <View style={styles.row}>
+            <View>
+              <Text style={styles.businessName}>Dhaka Automobiles</Text>
+              <Text style={styles.subHeader}>{documentSubtitle}</Text>
+            </View>
+            <View style={{ alignItems: "flex-end" }}>
+              <Text style={styles.docTitle}>{documentTitle}</Text>
+              {badgeLabel && <Text style={styles.docBadge}>{badgeLabel}</Text>}
+            </View>
+          </View>
         </View>
 
         <View style={styles.section}>
-          <View style={styles.row}>
-            <Text>Invoice #: {invoiceNumber}</Text>
+          <View style={styles.sectionRow}>
+            <Text style={{ fontWeight: 700 }}>
+              {documentTypeLabel}: {invoiceNumber}
+            </Text>
             <Text>Date: {new Date().toLocaleDateString()}</Text>
           </View>
           <Text>Customer: {customer.name} ({customer.phone})</Text>
@@ -89,17 +113,19 @@ export function InvoicePdf({
             <Text style={styles.totalsLabel}>Subtotal</Text>
             <Text style={styles.totalsValue}>{money(subtotal)}</Text>
           </View>
+          {discountPercent > 0 && (
+            <View style={styles.totalsRow}>
+              <Text style={styles.totalsLabel}>Discount ({discountPercent}% on Service Charge)</Text>
+              <Text style={styles.totalsValue}>-{money(discountAmount)}</Text>
+            </View>
+          )}
           <View style={styles.totalsRow}>
-            <Text style={styles.totalsLabel}>Discount ({discountPercent}%)</Text>
-            <Text style={styles.totalsValue}>-{money(discountAmount)}</Text>
-          </View>
-          <View style={styles.totalsRow}>
-            <Text style={{ ...styles.totalsLabel, fontWeight: 700 }}>Total</Text>
-            <Text style={{ ...styles.totalsValue, fontWeight: 700 }}>{money(total)}</Text>
+            <Text style={{ ...styles.totalsLabel, fontWeight: 700, fontSize: 11 }}>Total</Text>
+            <Text style={{ ...styles.totalsValue, fontWeight: 700, fontSize: 11 }}>{money(total)}</Text>
           </View>
         </View>
 
-        <Text style={styles.note}>See attached warranty card if applicable.</Text>
+        {note && <Text style={styles.note}>{note}</Text>}
       </Page>
     </Document>
   );

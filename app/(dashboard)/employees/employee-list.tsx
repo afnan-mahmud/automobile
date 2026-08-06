@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { Badge } from "@/components/ui/badge";
 import { AddEmployeeDialog } from "./add-employee-dialog";
-import { Phone, Briefcase, DollarSign, ArrowRight, Users } from "lucide-react";
+import { Phone, Briefcase, DollarSign, ArrowRight, Users, Shield } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 type EmployeeRow = {
@@ -12,8 +12,17 @@ type EmployeeRow = {
   phone: string;
   designation?: string;
   departments?: string[];
+  salaryType?: "daily" | "monthly";
+  salaryAmount?: number;
   hourlyRate: number;
+  overtimeHourlyRate?: number;
+  requiredHoursPerDay?: number;
   active: boolean;
+  userId?: {
+    _id?: string;
+    role?: string;
+    email?: string;
+  } | null;
 };
 
 function getInitials(name: string) {
@@ -79,6 +88,19 @@ export function EmployeeList({ initialEmployees }: { initialEmployees: EmployeeR
             <div className={cn("relative flex flex-col items-center pb-4 pt-6 px-5")}>
               <div className="absolute inset-x-0 top-0 h-20 opacity-10 bg-gradient-to-b from-primary to-transparent" />
 
+              {/* Login Role Badge if available */}
+              {emp.userId?.role && (
+                <div className="absolute left-3 top-3 z-10">
+                  <Badge
+                    variant="outline"
+                    className="text-[10px] capitalize bg-background/80 backdrop-blur-sm border-primary/30 text-primary gap-1 py-0.5 px-2"
+                  >
+                    <Shield className="size-2.5" />
+                    {emp.userId.role}
+                  </Badge>
+                </div>
+              )}
+
               {/* Avatar */}
               <div
                 className={cn(
@@ -125,10 +147,17 @@ export function EmployeeList({ initialEmployees }: { initialEmployees: EmployeeR
             {/* Stats row */}
             <div className="mx-5 mt-4 grid grid-cols-2 divide-x rounded-xl border bg-muted/30">
               <div className="flex flex-col items-center py-2.5">
-                <span className="text-xs text-muted-foreground">Rate</span>
-                <span className="text-sm font-semibold text-foreground">৳{emp.hourlyRate}/hr</span>
+                <span className="text-xs text-muted-foreground">Salary / Rate</span>
+                <span className="text-sm font-semibold text-foreground">
+                  {emp.salaryType === "daily"
+                    ? `৳${emp.salaryAmount || Math.round(emp.hourlyRate * (emp.requiredHoursPerDay || 8))}/d`
+                    : `৳${emp.salaryAmount || Math.round(emp.hourlyRate * 30 * (emp.requiredHoursPerDay || 8))}/m`}
+                </span>
+                <span className="text-[10px] text-muted-foreground">
+                  ৳{emp.hourlyRate}/h · OT: ৳{emp.overtimeHourlyRate || emp.hourlyRate}/h
+                </span>
               </div>
-              <div className="flex flex-col items-center py-2.5">
+              <div className="flex flex-col items-center justify-center py-2.5">
                 <span className="text-xs text-muted-foreground">Status</span>
                 <Badge
                   variant={emp.active ? "success" : "outline"}

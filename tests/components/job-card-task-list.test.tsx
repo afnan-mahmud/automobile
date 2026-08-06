@@ -35,6 +35,7 @@ describe("JobCardDetail task list", () => {
   it("renders each task with its description and status badge", () => {
     const jobCard = {
       _id: "jc1",
+      jobCardNumber: "JC-2026-0001",
       status: "in_progress" as const,
       tasks: [
         {
@@ -67,12 +68,13 @@ describe("JobCardDetail task list", () => {
         employees={[]}
         products={[]}
         warrantyCard={null}
+        services={[]}
       />
     );
 
     expect(screen.getByText("Change engine oil")).toBeInTheDocument();
     expect(screen.getByText("Check brakes")).toBeInTheDocument();
-    expect(screen.getByText("Completed")).toBeInTheDocument();
+    expect(screen.getByText("Done")).toBeInTheDocument();
     expect(screen.getByText("Pending")).toBeInTheDocument();
   });
 });

@@ -36,7 +36,8 @@ import {
   FileText,
   Link as LinkIcon,
   ShieldCheck,
-  Car
+  Car,
+  Printer,
 } from "lucide-react";
 
 type Task = {
@@ -500,6 +501,16 @@ export function JobCardDetail({
                 </div>
 
                 <div className="pt-2 flex flex-col gap-2">
+                  <a
+                    href={`/api/job-cards/${jobCard._id}/pdf`}
+                    target="_blank"
+                    rel="noreferrer"
+                    className="inline-flex h-11 w-full items-center justify-start rounded-xl border bg-background hover:bg-muted/50 px-4 text-sm font-medium transition-colors"
+                  >
+                    <Printer className="mr-2 size-4 text-muted-foreground" />
+                    Download Bill / Estimate PDF
+                  </a>
+
                   <Button
                     variant="outline"
                     className="w-full justify-start rounded-xl h-11 bg-background hover:bg-muted/50"

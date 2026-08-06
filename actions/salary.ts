@@ -24,15 +24,51 @@ async function calculateAndUpsertSalary(employeeId: string, month: number, year:
     date: { $gte: monthStart, $lt: monthEnd },
   }).lean();
 
-  const totalHoursWorked = attendance.reduce((sum, a) => sum + (a.hoursWorked || 0), 0);
+  const reqHoursPerDay = employee.requiredHoursPerDay || 8;
   const workingDays = attendance.length;
-  const requiredHours = workingDays * employee.requiredHoursPerDay;
+  const requiredHours = workingDays * reqHoursPerDay;
 
-  const shortfall = Math.max(0, requiredHours - totalHoursWorked);
-  const excess = Math.max(0, totalHoursWorked - requiredHours);
-  const deduction = shortfall * employee.hourlyRate;
-  const overtimeAmount = excess * employee.hourlyRate;
-  const netSalary = totalHoursWorked * employee.hourlyRate;
+  const hourlyRate =
+    employee.hourlyRate ||
+    (employee.salaryAmount
+      ? employee.salaryType === "daily"
+        ? employee.salaryAmount / reqHoursPerDay
+        : employee.salaryAmount / (30 * reqHoursPerDay)
+      : 0);
+
+  const overtimeHourlyRate =
+    employee.overtimeHourlyRate && employee.overtimeHourlyRate > 0
+      ? employee.overtimeHourlyRate
+      : hourlyRate;
+
+  let totalHoursWorked = 0;
+  let totalRegularHours = 0;
+  let totalOvertimeHours = 0;
+  let totalShortfallHours = 0;
+
+  for (const record of attendance) {
+    if (record.status === "absent") {
+      // Absent day: No money is added, full required hours are added to shortfall deduction
+      totalShortfallHours += reqHoursPerDay;
+      continue;
+    }
+
+    const dayHours = record.hoursWorked || 0;
+    totalHoursWorked += dayHours;
+
+    const regularHours = Math.min(dayHours, reqHoursPerDay);
+    const overtimeHours = Math.max(0, dayHours - reqHoursPerDay);
+    const shortfallHours = Math.max(0, reqHoursPerDay - dayHours);
+
+    totalRegularHours += regularHours;
+    totalOvertimeHours += overtimeHours;
+    totalShortfallHours += shortfallHours;
+  }
+
+  const deduction = totalShortfallHours * hourlyRate;
+  const overtimeAmount = totalOvertimeHours * overtimeHourlyRate;
+  const baseSalary = totalRegularHours * hourlyRate;
+  const netSalary = baseSalary + overtimeAmount;
 
   return SalaryRecord.findOneAndUpdate(
     { employeeId, month, year },
