@@ -1,9 +1,11 @@
 "use client";
 
+import Link from "next/link";
 import { Badge } from "@/components/ui/badge";
 import { AssignDiscountDialog } from "./assign-discount-dialog";
-import { Tag, Calendar, User, Percent } from "lucide-react";
+import { Tag, Calendar, User, Receipt } from "lucide-react";
 import { cn } from "@/lib/utils";
+import type { DiscountCardUsage } from "@/actions/discountCards";
 
 type DiscountCardRow = {
   _id: string;
@@ -33,7 +35,13 @@ function discountGradient(pct: number) {
   return "from-sky-500 to-blue-600";
 }
 
-export function DiscountCardList({ initialCards }: { initialCards: DiscountCardRow[] }) {
+export function DiscountCardList({
+  initialCards,
+  usage,
+}: {
+  initialCards: DiscountCardRow[];
+  usage: Record<string, DiscountCardUsage>;
+}) {
   const activeCards = initialCards.filter((c) => !isExpired(c));
   
   return (
@@ -67,12 +75,14 @@ export function DiscountCardList({ initialCards }: { initialCards: DiscountCardR
           const expired = isExpired(card);
           const days = daysUntilExpiry(card);
           const gradient = discountGradient(card.discountPercent);
+          const cardUsage = usage[card._id] ?? { timesUsed: 0, totalDiscountAmount: 0 };
 
           return (
-            <div
+            <Link
               key={card._id}
+              href={`/discount-cards/${card._id}`}
               className={cn(
-                "relative flex flex-col overflow-hidden rounded-2xl border bg-card shadow-card transition-all duration-300 hover:-translate-y-1 hover:shadow-xl",
+                "block relative flex flex-col overflow-hidden rounded-2xl border bg-card shadow-card transition-all duration-300 hover:-translate-y-1 hover:shadow-xl",
                 expired && "opacity-75"
               )}
             >
@@ -147,8 +157,23 @@ export function DiscountCardList({ initialCards }: { initialCards: DiscountCardR
                     </p>
                   )}
                 </div>
+
+                {/* Usage */}
+                <div className="flex items-center justify-between rounded-xl border bg-muted/30 px-3 py-2.5">
+                  <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
+                    <Receipt className="size-3.5" />
+                    <span>Usage</span>
+                  </div>
+                  {cardUsage.timesUsed === 0 ? (
+                    <span className="text-xs text-muted-foreground">Not used yet</span>
+                  ) : (
+                    <span className="text-sm font-medium">
+                      {cardUsage.timesUsed}× · ৳{cardUsage.totalDiscountAmount.toFixed(2)} saved
+                    </span>
+                  )}
+                </div>
               </div>
-            </div>
+            </Link>
           );
         })}
       </div>
