@@ -2,15 +2,17 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { StatCard } from "@/components/stat-card";
 import { requirePageRole } from "@/lib/auth";
 import { getFinanceDashboardSummary, getDailyIncomeExpense } from "@/actions/accounts";
+import { resolvePreset } from "@/lib/dateRange";
 import { CHART_COLORS } from "@/lib/chartColors";
 import { IncomeExpenseChart } from "./income-expense-chart";
 
 export default async function FinanceDashboardPage() {
   await requirePageRole(["admin"]);
 
+  const range = resolvePreset("last30");
   const [summary, daily] = await Promise.all([
-    getFinanceDashboardSummary(),
-    getDailyIncomeExpense(30),
+    getFinanceDashboardSummary(range),
+    getDailyIncomeExpense(range),
   ]);
 
   const incomeSparkline = daily.map((d: { income: number }) => ({ value: d.income }));

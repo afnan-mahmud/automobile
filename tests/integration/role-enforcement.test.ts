@@ -9,6 +9,7 @@ import { connectToDatabase } from "@/lib/db";
 import { createCustomer } from "@/actions/customers";
 import { createEmployee } from "@/actions/employees";
 import { getFinanceDashboardSummary } from "@/actions/accounts";
+import { resolvePreset } from "@/lib/dateRange";
 import { JobCard } from "@/models/JobCard";
 import { updateTaskStatus } from "@/actions/jobCards";
 
@@ -47,7 +48,9 @@ describe("role enforcement", () => {
 
   it("rejects getFinanceDashboardSummary for a manager session (admin only)", async () => {
     setMockSession({ user: { id: "507f1f77bcf86cd799439013", role: "manager" } });
-    await expect(getFinanceDashboardSummary()).rejects.toThrow("Unauthorized");
+    await expect(
+      getFinanceDashboardSummary(resolvePreset("thisYear"))
+    ).rejects.toThrow("Unauthorized");
   });
 
   it("rejects a technician marking another technician's task complete", async () => {

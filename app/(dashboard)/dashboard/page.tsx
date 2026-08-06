@@ -7,20 +7,14 @@ import {
   getJobCardStatusBreakdown,
   getTopServicedVehicles,
   getTechnicianDashboard,
+  getTodayAttendanceSummary,
 } from "@/actions/dashboard";
+import { resolvePreset } from "@/lib/dateRange";
 import { JobCardStatusChart } from "./job-card-status-chart";
 import { RecentJobCardsPanel } from "./recent-job-cards-panel";
 import { TopVehiclesTable } from "./top-vehicles-table";
+import { EmployeeAttendancePanel } from "./employee-attendance-panel";
 
-function monthRange(monthOffset: number) {
-  const now = new Date();
-  const start = new Date(now.getFullYear(), now.getMonth() + monthOffset, 1);
-  const end =
-    monthOffset === 0
-      ? now
-      : new Date(now.getFullYear(), now.getMonth() + monthOffset + 1, 0, 23, 59, 59);
-  return { start: start.toISOString(), end: end.toISOString() };
-}
 
 export default async function DashboardPage() {
   const session = await requirePageRole(["admin", "manager", "technician"]);
@@ -54,14 +48,27 @@ export default async function DashboardPage() {
   ).length;
 
   if (role === "manager") {
-    const topVehicles = await getTopServicedVehicles();
+    const [topVehicles, attendanceSummary] = await Promise.all([
+      getTopServicedVehicles(),
+      getTodayAttendanceSummary(),
+    ]);
     return (
       <div className="space-y-8">
-        <div className="grid grid-cols-1 gap-6 sm:grid-cols-3">
+        <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-4">
           <StatCard title="Open Orders" value={String(openCount)} variant="primary" progress={75} />
           <StatCard title="In-Progress Orders" value={String(inProgressCount)} variant="primary" progress={45} />
+          <StatCard
+            title="Staff Present Today"
+            value={`${attendanceSummary.totalPresent}/${attendanceSummary.totalEmployees}`}
+            progress={attendanceSummary.attendanceRate}
+            trend={{
+              label: `${attendanceSummary.absentCount} Absent`,
+              positive: attendanceSummary.absentCount === 0,
+            }}
+          />
           <StatCard title="Low Stock Items" value={String(lowStockCount)} />
         </div>
+        <EmployeeAttendancePanel summary={attendanceSummary} />
         <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
           <JobCardStatusChart data={statusBreakdown} />
           <RecentJobCardsPanel jobCards={jobCards.slice(0, 5)} />
@@ -71,14 +78,14 @@ export default async function DashboardPage() {
     );
   }
 
-  const thisMonth = monthRange(0);
-  const prevMonth = monthRange(-1);
-  const [thisMonthSummary, prevMonthSummary, daily, topVehicles] = await Promise.all([
-    getFinanceDashboardSummary(thisMonth.start, thisMonth.end),
-    getFinanceDashboardSummary(prevMonth.start, prevMonth.end),
-    getDailyIncomeExpense(30),
-    getTopServicedVehicles(),
-  ]);
+  const [thisMonthSummary, prevMonthSummary, daily, topVehicles, attendanceSummary] =
+    await Promise.all([
+      getFinanceDashboardSummary(resolvePreset("thisMonth")),
+      getFinanceDashboardSummary(resolvePreset("lastMonth")),
+      getDailyIncomeExpense(resolvePreset("last30")),
+      getTopServicedVehicles(),
+      getTodayAttendanceSummary(),
+    ]);
   const trendPercent =
     prevMonthSummary.totalIncome === 0
       ? null
@@ -90,7 +97,7 @@ export default async function DashboardPage() {
 
   return (
     <div className="space-y-8">
-      <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-4">
+      <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5">
         <StatCard
           title="Total Revenue"
           value={`৳${thisMonthSummary.totalIncome.toFixed(2)}`}
@@ -111,9 +118,19 @@ export default async function DashboardPage() {
           variant="primary"
           progress={thisMonthSummary.outstandingDues > 0 ? 80 : 0}
         />
+        <StatCard
+          title="Staff Present Today"
+          value={`${attendanceSummary.totalPresent}/${attendanceSummary.totalEmployees}`}
+          progress={attendanceSummary.attendanceRate}
+          trend={{
+            label: `${attendanceSummary.absentCount} Absent`,
+            positive: attendanceSummary.absentCount === 0,
+          }}
+        />
         <StatCard title="Open Orders" value={String(openCount)} />
         <StatCard title="Low Stock Items" value={String(lowStockCount)} />
       </div>
+      <EmployeeAttendancePanel summary={attendanceSummary} />
       <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
         <JobCardStatusChart data={statusBreakdown} />
         <RecentJobCardsPanel jobCards={jobCards.slice(0, 5)} />

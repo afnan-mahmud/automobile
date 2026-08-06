@@ -13,6 +13,13 @@ import {
 } from "@/models/AccountTransaction";
 import { Invoice } from "@/models/Invoice";
 import type { ActionResult } from "@/actions/customers";
+import {
+  startOfDayUtc,
+  endOfDayUtc,
+  eachDayInRange,
+  REPORT_TIMEZONE,
+  type DateRange,
+} from "@/lib/dateRange";
 
 const createTransactionSchema = z.object({
   type: z.enum(TRANSACTION_TYPES),
@@ -53,12 +60,16 @@ export type TransactionFilters = {
   paymentMethod?: (typeof PAYMENT_METHODS)[number];
 };
 
-function buildDateRangeFilter(from?: string, to?: string) {
-  if (!from && !to) return {};
+/**
+ * `to` is inclusive of the entire final day. Building it from a bare
+ * `new Date("2026-07-31")` would land on midnight and silently drop that
+ * whole day's transactions.
+ */
+function buildRangeFilter(range: DateRange) {
   return {
     date: {
-      ...(from ? { $gte: new Date(from) } : {}),
-      ...(to ? { $lte: new Date(to) } : {}),
+      $gte: startOfDayUtc(range.fromDay),
+      $lte: endOfDayUtc(range.toDay),
     },
   };
 }
@@ -67,9 +78,14 @@ export async function listAccountTransactions(filters: TransactionFilters = {}) 
   await requireRole(["admin", "manager"]);
   await connectToDatabase();
 
-  const filter: Record<string, unknown> = {
-    ...buildDateRangeFilter(filters.from, filters.to),
-  };
+  const filter: Record<string, unknown> = {};
+  if (filters.from && filters.to) {
+    Object.assign(filter, buildRangeFilter({ fromDay: filters.from, toDay: filters.to }));
+  } else if (filters.from) {
+    filter.date = { $gte: startOfDayUtc(filters.from) };
+  } else if (filters.to) {
+    filter.date = { $lte: endOfDayUtc(filters.to) };
+  }
   if (filters.type) filter.type = filters.type;
   if (filters.category) filter.category = filters.category;
   if (filters.paymentMethod) filter.paymentMethod = filters.paymentMethod;
@@ -82,13 +98,13 @@ export async function listAccountTransactions(filters: TransactionFilters = {}) 
   return serialize(transactions);
 }
 
-export async function getFinanceDashboardSummary(from?: string, to?: string) {
+export async function getFinanceDashboardSummary(range: DateRange) {
   await requireRole(["admin"]);
   await connectToDatabase();
 
-  const dateFilter = buildDateRangeFilter(from, to);
+  const dateFilter = buildRangeFilter(range);
 
-  const [incomeByCategory, expenseByCategory, byPaymentMethod, outstandingAgg] =
+  const [incomeByCategory, expenseByCategory, byPaymentMethod, unpaidInvoices] =
     await Promise.all([
       AccountTransaction.aggregate([
         { $match: { type: "income", ...dateFilter } },
@@ -112,15 +128,40 @@ export async function getFinanceDashboardSummary(from?: string, to?: string) {
           },
         },
       ]),
-      Invoice.aggregate([
-        { $match: { status: { $in: ["sent", "partially_paid"] } } },
-        { $group: { _id: null, total: { $sum: "$total" } } },
-      ]),
+      // Intentionally NOT date-filtered: outstanding dues is a live balance,
+      // not a figure scoped to the selected reporting period. The UI labels it
+      // "as of today" so it doesn't read as a filtering bug.
+      Invoice.find({ status: { $in: ["sent", "partially_paid"] } }).lean(),
     ]);
+
+  const unpaidInvoiceIds = unpaidInvoices.map((inv) => inv._id);
+  const paidForUnpaidInvoices =
+    unpaidInvoiceIds.length > 0
+      ? await AccountTransaction.aggregate([
+          { $match: { relatedInvoiceId: { $in: unpaidInvoiceIds }, type: "income" } },
+          { $group: { _id: "$relatedInvoiceId", totalPaid: { $sum: "$amount" } } },
+        ])
+      : [];
+
+  const paidMap = new Map(
+    paidForUnpaidInvoices.map((p) => [p._id.toString(), p.totalPaid as number])
+  );
+  const outstandingDues = unpaidInvoices.reduce((sum, inv) => {
+    const paid = paidMap.get(inv._id.toString()) ?? 0;
+    return sum + Math.max(0, inv.total - paid);
+  }, 0);
 
   const totalIncome = incomeByCategory.reduce((sum, c) => sum + c.total, 0);
   const totalExpense = expenseByCategory.reduce((sum, c) => sum + c.total, 0);
-  const outstandingDues = outstandingAgg[0]?.total ?? 0;
+
+  const methodMap = new Map(
+    byPaymentMethod.map((p) => [p._id, { income: p.income as number, expense: p.expense as number }])
+  );
+  const formattedPaymentMethods = PAYMENT_METHODS.map((pm) => ({
+    paymentMethod: pm,
+    income: methodMap.get(pm)?.income ?? 0,
+    expense: methodMap.get(pm)?.expense ?? 0,
+  }));
 
   return serialize({
     totalIncome,
@@ -129,42 +170,42 @@ export async function getFinanceDashboardSummary(from?: string, to?: string) {
     outstandingDues,
     incomeByCategory: incomeByCategory.map((c) => ({ category: c._id, total: c.total })),
     expenseByCategory: expenseByCategory.map((c) => ({ category: c._id, total: c.total })),
-    byPaymentMethod: byPaymentMethod.map((p) => ({
-      paymentMethod: p._id,
-      income: p.income,
-      expense: p.expense,
-    })),
+    byPaymentMethod: formattedPaymentMethods,
   });
 }
 
-export async function getDailyIncomeExpense(days = 30) {
+export async function getDailyIncomeExpense(range: DateRange) {
   await requireRole(["admin"]);
   await connectToDatabase();
 
-  const since = new Date();
-  since.setDate(since.getDate() - days);
-
   const rows = await AccountTransaction.aggregate([
-    { $match: { date: { $gte: since } } },
+    { $match: buildRangeFilter(range) },
     {
       $group: {
         _id: {
-          day: { $dateToString: { format: "%Y-%m-%d", date: "$date" } },
+          day: {
+            $dateToString: {
+              format: "%Y-%m-%d",
+              date: "$date",
+              timezone: REPORT_TIMEZONE,
+            },
+          },
           type: "$type",
         },
         total: { $sum: "$amount" },
       },
     },
-    { $sort: { "_id.day": 1 } },
   ]);
 
-  const byDay = new Map<string, { date: string; income: number; expense: number }>();
+  // Zero-fill: the chart needs a continuous line, and a sparse series would
+  // silently compress quiet days out of the x-axis.
+  const byDay = new Map(
+    eachDayInRange(range).map((day) => [day, { date: day, income: 0, expense: 0 }])
+  );
+
   for (const row of rows) {
-    const day = row._id.day as string;
-    if (!byDay.has(day)) {
-      byDay.set(day, { date: day, income: 0, expense: 0 });
-    }
-    const entry = byDay.get(day)!;
+    const entry = byDay.get(row._id.day as string);
+    if (!entry) continue; // defensive: a day outside the range can't happen
     if (row._id.type === "income") entry.income = row.total;
     else entry.expense = row.total;
   }
